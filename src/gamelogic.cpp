@@ -14,10 +14,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fmt/format.h>
 #include "gamelogic.h"
+#include "glm/ext/matrix_transform.hpp"
 #include "sceneGraph.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
-
 #include "utilities/imageLoader.hpp"
 #include "utilities/glfont.h"
 
@@ -95,6 +95,13 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
 //     bool a_placeholder_value;
 // };
 // LightSource lightSources[/*Put number of light sources you want here*/];
+#define NUM_LIGHT_SOURCES 3
+struct LightSource {
+    int id;
+    SceneNode* node;
+};
+
+LightSource LightSources[NUM_LIGHT_SOURCES];
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     buffer = new sf::SoundBuffer();
@@ -141,6 +148,20 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->VAOIndexCount       = sphere.indices.size();
 
 
+    // Create lights and add them to scene
+    for(int i = 0; i < NUM_LIGHT_SOURCES; i++) {
+        LightSources[i].id = i;
+        SceneNode* node = createSceneNode();
+        node->nodeType = POINT_LIGHT;
+        LightSources[i].node = node;
+    }
+
+    // Make one of the lights connected to the ball.
+    ballNode->children.push_back(LightSources[0].node);
+
+    // Just throw the other lights as children of the scene for now.
+    rootNode->children.push_back(LightSources[1].node);
+    rootNode->children.push_back(LightSources[2].node);
 
 
 
@@ -308,7 +329,7 @@ void updateFrame(GLFWwindow* window) {
         }
     }
 
-    glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
+    //glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
 
     glm::vec3 cameraPosition = glm::vec3(0, 2, -20);
 
@@ -319,7 +340,7 @@ void updateFrame(GLFWwindow* window) {
                     glm::rotate(lookRotation, glm::vec3(0, 1, 0)) *
                     glm::translate(-cameraPosition);
 
-    glm::mat4 VP = projection * cameraTransform;
+    //glm::mat4 VP = projection * cameraTransform;
 
     // Move and rotate various SceneNodes
     boxNode->position = { 0, -10, -80 };
@@ -334,14 +355,18 @@ void updateFrame(GLFWwindow* window) {
         boxNode->position.z - (boxDimensions.z/2) + (padDimensions.z/2) + (1 - padPositionZ) * (boxDimensions.z - padDimensions.z)
     };
 
-    updateNodeTransformations(rootNode, VP);
+    // Updated to just recursively handle M. V and P attached later in render to have direct distinct access to MV and MVP.
+    updateNodeTransformations(rootNode, glm::identity<glm::mat4>(), cameraTransform);
 
-
+    // Note to self: Easy enough to just make this M, and attach V later too. I think MV is fine for lighting tho?
 
 
 }
 
-void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar) {
+void updateNodeTransformations(SceneNode* node, glm::mat4 M, glm::mat4 V) {
+
+    glm::mat4 transformationThusFar = V * M; // MVP so far.
+
     glm::mat4 transformationMatrix =
               glm::translate(node->position)
             * glm::translate(node->referencePoint)
@@ -353,6 +378,10 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 
     node->currentTransformationMatrix = transformationThusFar * transformationMatrix;
 
+    // M is the only transformation that gets "stacked" as we traverse the scene graph
+    // Transform relative to parent. V and P just get passed through as-is.
+    glm::mat4 stackedM = M * transformationMatrix;
+
     switch(node->nodeType) {
         case GEOMETRY: break;
         case POINT_LIGHT: break;
@@ -360,12 +389,28 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     }
 
     for(SceneNode* child : node->children) {
-        updateNodeTransformations(child, node->currentTransformationMatrix);
+        updateNodeTransformations(child, stackedM, V);
     }
 }
 
 void renderNode(SceneNode* node) {
+
+    glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
+
+    // MVP
+    glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(projection * node->currentTransformationMatrix));
+
+    // Just MV
     glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+
+
+    /*
+        TODO / IDEA. NOT SURE IF THIS IS HOW IM SUPPOSED TO DO IT.
+        IF NODE TYPE IS GEOMETRY
+            LOOK AT ALL THE LIGHT POSITIONS (in LightSources) AND PASS THOSE POSITIONS AS UNIFORM VAR (YOU CAN DO vec4[])
+        
+        IM PRETTY SURE ALL THE LIGHTS ARE TRANSFORMED PROPERLY BY UPDATENODETRANSFORMS (AND THEY DONT GET WARPED BY PERSPECTIVE)
+     */
 
     switch(node->nodeType) {
         case GEOMETRY:

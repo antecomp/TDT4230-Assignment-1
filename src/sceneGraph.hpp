@@ -52,6 +52,16 @@ struct SceneNode {
 
 	// Node type is used to determine how to handle the contents of a node
 	SceneNodeType nodeType;
+
+
+	/* TODO:
+		You’ll probably
+		want to track the ID of light sources somewhere, and changing SceneNode is a great
+		place to add something to track that.
+
+		Not sure how they want me to do that though.
+	*/
+
 };
 
 SceneNode* createSceneNode();
