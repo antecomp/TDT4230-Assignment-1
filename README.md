@@ -29,3 +29,7 @@ which is equivalent to
 	cmake ..
 	make
 	./glowbox
+
+
+
+test
