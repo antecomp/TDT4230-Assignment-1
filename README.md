@@ -31,5 +31,7 @@ which is equivalent to
 	./glowbox
 
 
-
-testAAAA
+Note to self:
+Push changes with
+`git push myclone master `
+Use CLI for working with git. VSC's Git control is really jank with forks (or I suck at setting them up correctly)
