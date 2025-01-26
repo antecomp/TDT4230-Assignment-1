@@ -14,6 +14,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <fmt/format.h>
 #include "gamelogic.h"
+#include "glm/ext/matrix_transform.hpp"
 #include "sceneGraph.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
@@ -96,6 +97,14 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
 // };
 // LightSource lightSources[/*Put number of light sources you want here*/];
 
+#define NUM_LIGHT_SOURCES 3
+struct LightSource {
+    int id;
+    SceneNode* node;
+};
+
+LightSource LightSources[NUM_LIGHT_SOURCES];
+
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     buffer = new sf::SoundBuffer();
     if (!buffer->loadFromFile("../res/Hall of the Mountain King.ogg")) {
@@ -131,6 +140,26 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     rootNode->children.push_back(padNode);
     rootNode->children.push_back(ballNode);
 
+
+// Create lights and add them to scene
+    for(int i = 0; i < NUM_LIGHT_SOURCES; i++) {
+        LightSources[i].id = i;
+        SceneNode* node = createSceneNode();
+        node->nodeType = POINT_LIGHT;
+        LightSources[i].node = node;
+    }
+
+    // Make one of the lights connected to the ball.
+    ballNode->children.push_back(LightSources[0].node);
+
+    // Just throw the other lights as children of the scene for now.
+    //LightSources[1].node->position = glm::vec3(10.0f, 3.0f, 5.0f);
+    rootNode->children.push_back(LightSources[1].node);
+    rootNode->children.push_back(LightSources[2].node);
+
+
+
+
     boxNode->vertexArrayObjectID  = boxVAO;
     boxNode->VAOIndexCount        = box.indices.size();
 
@@ -152,7 +181,15 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     std::cout << "Ready. Click to start!" << std::endl;
 }
 
+
+// Prob bad practice, will maybe fix later - expose all this stuff globally so I can referenc it everywhere.
+glm::mat4 projection;
+glm::vec3 cameraPosition;
+glm::mat4 cameraTransform;
+
 void updateFrame(GLFWwindow* window) {
+
+
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     double timeDelta = getTimeDeltaSeconds();
@@ -308,18 +345,20 @@ void updateFrame(GLFWwindow* window) {
         }
     }
 
-    glm::mat4 projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
+    // Camera/Transformation Log Starts Here.
 
-    glm::vec3 cameraPosition = glm::vec3(0, 2, -20);
+    projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
+
+    cameraPosition = glm::vec3(0, 2, -20);
 
     // Some math to make the camera move in a nice way
     float lookRotation = -0.6 / (1 + exp(-5 * (padPositionX-0.5))) + 0.3;
-    glm::mat4 cameraTransform =
+    cameraTransform =
                     glm::rotate(0.3f + 0.2f * float(-padPositionZ*padPositionZ), glm::vec3(1, 0, 0)) *
                     glm::rotate(lookRotation, glm::vec3(0, 1, 0)) *
                     glm::translate(-cameraPosition);
 
-    glm::mat4 VP = projection * cameraTransform;
+    //glm::mat4 VP = projection * cameraTransform;
 
     // Move and rotate various SceneNodes
     boxNode->position = { 0, -10, -80 };
@@ -334,7 +373,8 @@ void updateFrame(GLFWwindow* window) {
         boxNode->position.z - (boxDimensions.z/2) + (padDimensions.z/2) + (1 - padPositionZ) * (boxDimensions.z - padDimensions.z)
     };
 
-    updateNodeTransformations(rootNode, VP);
+    //updateNodeTransformations(rootNode, VP);
+    updateNodeTransformations(rootNode, glm::identity<glm::mat4>());
 
 
 
@@ -365,7 +405,12 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 }
 
 void renderNode(SceneNode* node) {
-    glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+    //glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
+    glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(projection * cameraTransform * node->currentTransformationMatrix)); // MVP
+
+    // I *think* I actually just need MV by itself, not M and V seperately - easy enough to combine them.
+    glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix)); // M
+    glUniformMatrix4fv(5, 1, GL_FALSE, glm::value_ptr(cameraTransform)); // V
 
     switch(node->nodeType) {
         case GEOMETRY:

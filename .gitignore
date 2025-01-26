@@ -40,3 +40,6 @@
 
 /.vscode/*
 /.vs/
+.cache/
+glad
+lib/
