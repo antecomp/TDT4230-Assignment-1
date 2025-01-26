@@ -153,7 +153,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->children.push_back(LightSources[0].node);
 
     // Just throw the other lights as children of the scene for now.
-    //LightSources[1].node->position = glm::vec3(10.0f, 3.0f, 5.0f);
+    LightSources[1].node->position = glm::vec3(10.0f, 3.0f, 5.0f);
     rootNode->children.push_back(LightSources[1].node);
     rootNode->children.push_back(LightSources[2].node);
 
@@ -404,6 +404,22 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     }
 }
 
+// Note to self. Light positions are not updated in the scene graph by the above function.
+// This is a seperate function for actually handling that info and shipping it off to the shader!
+// I *think* I can put this function inside the switch case for renderNode instead, but for now I want it seperate just
+// for clarity while I debug stuff. It's called in render frame before doing any renderNode stuff.
+void uploadLightPositions() {
+    glm::vec3 lightPositions[NUM_LIGHT_SOURCES];
+    for(int i = 0; i < NUM_LIGHT_SOURCES; ++i) {
+        glm::vec4 transformedPosition = LightSources[i].node->currentTransformationMatrix * glm::vec4(LightSources[i].node->position, 1.0);
+        lightPositions[i] = glm::vec3(transformedPosition);
+    }
+
+    // Pass them to the shader.
+    GLint uniformLocation = glGetUniformLocation(shader->get(), "lightPositions");
+    glUniform3fv(uniformLocation, NUM_LIGHT_SOURCES, glm::value_ptr(lightPositions[0]));
+}
+
 void renderNode(SceneNode* node) {
     //glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
     glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(projection * cameraTransform * node->currentTransformationMatrix)); // MVP
@@ -411,6 +427,7 @@ void renderNode(SceneNode* node) {
     // I *think* I actually just need MV by itself, not M and V seperately - easy enough to combine them.
     glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix)); // M
     glUniformMatrix4fv(5, 1, GL_FALSE, glm::value_ptr(cameraTransform)); // V
+    glUniformMatrix4fv(6, 1, GL_FALSE, glm::value_ptr(projection)); // P
 
     switch(node->nodeType) {
         case GEOMETRY:
@@ -432,6 +449,9 @@ void renderFrame(GLFWwindow* window) {
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
     glViewport(0, 0, windowWidth, windowHeight);
+
+    // Upload light positions to shader (ref note above implementation!)
+    uploadLightPositions();
 
     renderNode(rootNode);
 }
