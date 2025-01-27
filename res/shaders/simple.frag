@@ -13,6 +13,7 @@ float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
 
 vec3 ambientIntensity = vec3(0.1, 0.1, 0.1);
 vec3 diffuseColour = vec3(0.4, 0.4, 0.4); // SHould be a uniform later :)
+vec3 specularColour = vec3(1.0, 1.0, 1.0); // Specular reflection color (also make uniform later??)
 
 uniform vec3 lightPositions[NUM_LIGHT_SOURCES];
 uniform vec3 u_cameraPosition;
@@ -22,22 +23,29 @@ in vec3 fragWSPosition;
 void main()
 {
     vec3 totalDiffuse = vec3(0.0);
+    vec3 totalSpecular = vec3(0.0);
 
     for(int i = 0; i < NUM_LIGHT_SOURCES; i++) {
         vec3 lightDir = normalize(lightPositions[i] - fragWSPosition);
 
-        /*
-            The diffuse intensity is simply the dot product (cosine) of the light direction vector
-            and surface normal. To avoid affecting the other light components when the surface is
-            facing away from the light source (which causes the cosine to be negative), it should
-            be set to 0 when negative.
-        */
+        // Diffuse
         float diff = max(dot(normal, lightDir), 0.0); 
-
         totalDiffuse += diff * diffuseColour;
+
+        // Specular Reflect
+        vec3 reflectDir = reflect(-lightDir, normal); // For ease we're directly reflecting back towards light
+        vec3 viewDir = normalize(u_cameraPosition - fragWSPosition); // View direction toward the camera
+
+        // Specular intensity = reflected vector dot view (surface 2 eye)
+        // If the specular factor is negative, you should set it to 0.
+        // 32.0 is the shininess factor (hard coded, will make uniform l8r).
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
+        totalSpecular += spec * specularColour;
     }
 
-    color = vec4(totalDiffuse, 1.0);
+    vec3 finalColour = ambientIntensity + totalDiffuse + totalSpecular;
+
+    color = vec4(finalColour, 1.0);
 }
 
 

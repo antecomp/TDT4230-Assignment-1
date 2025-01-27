@@ -158,7 +158,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->children.push_back(LightSources[0].node);
 
     // Just throw the other lights as children of the scene for now.
-    LightSources[1].node->position = glm::vec3(10.0f, 3.0f, 5.0f);
+    LightSources[1].node->position = glm::vec3(90.0f, 13.0f, 5.0f);
     rootNode->children.push_back(LightSources[1].node);
     rootNode->children.push_back(LightSources[2].node);
 
