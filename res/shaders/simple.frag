@@ -11,7 +11,7 @@ float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758
 float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
 
 
-vec3 ambientIntensity = vec3(0.1, 0.1, 0.1);
+vec3 ambientIntensity = vec3(0.2, 0.1, 0.1);
 vec3 diffuseColour = vec3(0.4, 0.4, 0.4); // SHould be a uniform later :)
 vec3 specularColour = vec3(1.0, 1.0, 1.0); // Specular reflection color (also make uniform later??)
 
@@ -39,7 +39,7 @@ void main()
         // Specular intensity = reflected vector dot view (surface 2 eye)
         // If the specular factor is negative, you should set it to 0.
         // 32.0 is the shininess factor (hard coded, will make uniform l8r).
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 8.0);
         totalSpecular += spec * specularColour;
     }
 
