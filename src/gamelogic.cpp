@@ -15,9 +15,14 @@
 #include <fmt/format.h>
 #include "gamelogic.h"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/fwd.hpp"
+#include "glm/matrix.hpp"
 #include "sceneGraph.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
+
+// for debugging
+#include "glm/ext.hpp"
 
 #include "utilities/imageLoader.hpp"
 #include "utilities/glfont.h"
@@ -404,10 +409,11 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     }
 }
 
-// Note to self. Light positions are not updated in the scene graph by the above function.
+// NOTE: Light positions are not updated in the scene graph by the above function.
 // This is a seperate function for actually handling that info and shipping it off to the shader!
 // I *think* I can put this function inside the switch case for renderNode instead, but for now I want it seperate just
 // for clarity while I debug stuff. It's called in render frame before doing any renderNode stuff.
+// Lights uploaded in Worldspace. Assuming phong shading is also happening in WS.
 void uploadLightPositions() {
     glm::vec3 lightPositions[NUM_LIGHT_SOURCES];
     for(int i = 0; i < NUM_LIGHT_SOURCES; ++i) {
@@ -415,19 +421,36 @@ void uploadLightPositions() {
         lightPositions[i] = glm::vec3(transformedPosition);
     }
 
-    // Pass them to the shader.
+    // Pass them to the shader. 
+    //(trying out cool named uniform with shader instead of using loc manually because why not)
     GLint uniformLocation = glGetUniformLocation(shader->get(), "lightPositions");
     glUniform3fv(uniformLocation, NUM_LIGHT_SOURCES, glm::value_ptr(lightPositions[0]));
+
+
+    // Failing to separate responsibility hard here but since this is just a test helper anyways lets
+    // also just forward the camera position here too :))))
+    GLint cameraUniformLocation = glGetUniformLocation(shader->get(), "u_cameraPosition");
+    glUniform3fv(cameraUniformLocation, 1, glm::value_ptr(cameraPosition));
 }
 
 void renderNode(SceneNode* node) {
     //glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
     glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(projection * cameraTransform * node->currentTransformationMatrix)); // MVP
 
-    // I *think* I actually just need MV by itself, not M and V seperately - easy enough to combine them.
+    // Need M and V and P *ALL* separate bcz we do our phong shading in worldspace.
     glUniformMatrix4fv(4, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix)); // M
     glUniformMatrix4fv(5, 1, GL_FALSE, glm::value_ptr(cameraTransform)); // V
     glUniformMatrix4fv(6, 1, GL_FALSE, glm::value_ptr(projection)); // P
+
+    glm::mat3 InvTranspose = glm::mat3(glm::transpose(glm::inverse(node->currentTransformationMatrix)));
+
+    //std::cout << glm::to_string(InvTranspose) << std::endl; // Verify matrix is correct
+
+    // Inverse of the transpose + only top 3x3 matrix (we dont translate our normals.)
+    glUniformMatrix3fv(7, 1, GL_FALSE, glm::value_ptr(InvTranspose));
+
+    // Transform of normals + normalizing result done in shader im 95.4% sure
+
 
     switch(node->nodeType) {
         case GEOMETRY:
