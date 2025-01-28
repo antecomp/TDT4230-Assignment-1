@@ -37,7 +37,7 @@ void main()
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
-    for(int i = 1; i < NUM_LIGHT_SOURCES; i++) {
+    for(int i = 0; i < NUM_LIGHT_SOURCES; i++) {
         vec3 lightDistance = lightPositions[i] - fragWSPosition;
         vec3 lightDir = normalize(lightDistance);
         float d = length(lightDistance);
@@ -51,6 +51,7 @@ void main()
         if (
             length(toBall) < length(toLight) // Ball is between light and fragment
             && rejectLength < ballRadius // Fragment is within occlusion width
+            && dot(toBall, toLight) > 0.0 // Ball is "blocking" light (not behind it)
         ) {
             continue;
         }
