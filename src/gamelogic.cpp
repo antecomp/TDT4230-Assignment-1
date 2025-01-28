@@ -432,6 +432,10 @@ void uploadLightPositions() {
     // also just forward the camera position here too :))))
     GLint cameraUniformLocation = glGetUniformLocation(shader->get(), "u_cameraPosition");
     glUniform3fv(cameraUniformLocation, 1, glm::value_ptr(cameraPosition));
+
+    // Upload ball position as uniform for shadow calculations
+    GLint ballUniformLoc = glGetUniformLocation(shader->get(), "u_ballPosition");
+    glUniform3fv(ballUniformLoc, 1, glm::value_ptr(ballNode->position));
 }
 
 void renderNode(SceneNode* node) {
@@ -449,11 +453,6 @@ void renderNode(SceneNode* node) {
 
     // Inverse of the transpose + only top 3x3 matrix (we dont translate our normals.)
     glUniformMatrix3fv(7, 1, GL_FALSE, glm::value_ptr(InvTranspose));
-
-    // Upload ball position as uniform for shadow calculations
-    GLint ballUniformLoc = glGetUniformLocation(shader->get(), "u_ballPosition");
-    glUniform3fv(ballUniformLoc, 1, glm::value_ptr(ballNode->currentTransformationMatrix * glm::vec4(ballNode->position, 1.0)));
-
 
     switch(node->nodeType) {
         case GEOMETRY:
