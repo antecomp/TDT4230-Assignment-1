@@ -156,12 +156,12 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     // Make one of the lights connected to the ball.
     ballNode->children.push_back(LightSources[0].node);
-    LightSources[0].node->position = glm::vec3(0.0f, 5.0f, 1.0f);
+    LightSources[0].node->position = glm::vec3(0.0f, 0.0f, 2.0f);
 
     // Just throw the other lights as children of the scene for now.
-    LightSources[1].node->position = glm::vec3(90.0f, 13.0f, 5.0f);
-    rootNode->children.push_back(LightSources[1].node);
-    rootNode->children.push_back(LightSources[2].node);
+    LightSources[1].node->position = glm::vec3(30.0f, 0.0f, -15.0f);
+    boxNode->children.push_back(LightSources[1].node);
+    boxNode->children.push_back(LightSources[2].node);
 
 
 
@@ -450,7 +450,9 @@ void renderNode(SceneNode* node) {
     // Inverse of the transpose + only top 3x3 matrix (we dont translate our normals.)
     glUniformMatrix3fv(7, 1, GL_FALSE, glm::value_ptr(InvTranspose));
 
-    // Transform of normals + normalizing result done in shader im 95.4% sure
+    // Upload ball position as uniform for shadow calculations
+    GLint ballUniformLoc = glGetUniformLocation(shader->get(), "u_ballPosition");
+    glUniform3fv(ballUniformLoc, 1, glm::value_ptr(ballNode->currentTransformationMatrix * glm::vec4(ballNode->position, 1.0)));
 
 
     switch(node->nodeType) {
