@@ -161,7 +161,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
         node->nodeType = POINT_LIGHT;
         SceneLights[i].node = node;
     }
-
+/*
     // Make one of the lights connected to the ball.
     ballNode->children.push_back(SceneLights[0].node);
     SceneLights[0].node->position = glm::vec3(0.0f, 0.0f, 2.0f);
@@ -175,7 +175,17 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     SceneLights[0].color = glm::vec3(1.0, 0.8, 0.6); // Warm light
     SceneLights[1].color = glm::vec3(0.6, 0.6, 1.0); // Cool light
     SceneLights[2].color = glm::vec3(0.9, 0.9, 0.9); // Neutral white
+*/
 
+    SceneLights[0].color = glm::vec3(1.0, 0.0, 0.0);
+    SceneLights[0].node->position = glm::vec3(12.0f, 0.0f, 0.0f); 
+    SceneLights[1].color = glm::vec3(0.0, 0.0, 1.0); 
+    SceneLights[1].node->position = glm::vec3(-12.0f, 0.0f, 0.0f); 
+    SceneLights[2].color = glm::vec3(0.0, 1.0, 0.0); 
+
+    boxNode->children.push_back(SceneLights[0].node);
+    boxNode->children.push_back(SceneLights[1].node);
+    boxNode->children.push_back(SceneLights[2].node);
 
 
 

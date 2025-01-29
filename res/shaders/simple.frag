@@ -13,7 +13,7 @@ float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
 
 vec3 ambientIntensity = vec3(0.15, 0.15, 0.15);
 //vec3 diffuseColour = vec3(0.4, 0.4, 0.4); // SHould be a uniform later :)
-vec3 specularColour = vec3(0.7, 0.7, 0.7); // Specular reflection color (also make uniform later??)
+//vec3 specularColour = vec3(0.7, 0.7, 0.7); // Specular reflection color (also make uniform later??)
 
 struct LightSource {
     vec3 position;
@@ -80,6 +80,8 @@ void main()
         // 8.0 is the shininess factor (hard coded, will make uniform l8r).
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 8.0);
 
+
+        vec3 specularColour = lightSources[i].color * 1.5;
         totalSpecular += L * spec * specularColour;
     }
 
