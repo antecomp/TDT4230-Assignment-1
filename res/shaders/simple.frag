@@ -46,15 +46,32 @@ void main()
         float L = 1.0 / (la + d * lb + d * d * lc);
 
 
-        //Shadow Check
+        // //Shadow Check (Harsh cutoff with continue)
+        // vec3 toLight = lightSources[i].position - fragWSPosition;
+        // float rejectLength = length(reject(toBall, toLight));
+        // if (
+        //     length(toBall) < length(toLight) // Ball is between light and fragment
+        //     && rejectLength < ballRadius // Fragment is within occlusion width
+        //     && dot(toBall, toLight) > 0.0 // Ball is "blocking" light (not behind it)
+        // ) {
+        //     continue;
+        // }
+
+        // For smooth shadows we should instead scale some factor
+        // We can just scale L directly to make our lives easier...
+        float innerRadius = ballRadius;         // Hard shadow cutoff
+        float outerRadius = ballRadius * 1.5;   // Start of soft shadow transition
         vec3 toLight = lightSources[i].position - fragWSPosition;
         float rejectLength = length(reject(toBall, toLight));
+
         if (
             length(toBall) < length(toLight) // Ball is between light and fragment
-            && rejectLength < ballRadius // Fragment is within occlusion width
+            && rejectLength < outerRadius // Fragment is within extended occlusion width
             && dot(toBall, toLight) > 0.0 // Ball is "blocking" light (not behind it)
         ) {
-            continue;
+            // Thanks google: https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml
+            float shadowFactor = smoothstep(innerRadius, outerRadius, rejectLength);
+            L *= shadowFactor;
         }
 
         // Diffuse

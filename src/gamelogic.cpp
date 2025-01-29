@@ -110,7 +110,7 @@ struct SceneLight {
     glm::vec3 color;
 };
 
-// Uniform Struct format, what gets sent to the frag shader. SceneLight transformed to this.
+// Uniform Struct format, what gets sent to the frag shader. SceneLight transformed to this by uploadUniforms.
 struct LightSource {
     glm::vec3 position;
     glm::vec3 color;
