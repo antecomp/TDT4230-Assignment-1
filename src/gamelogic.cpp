@@ -177,6 +177,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     SceneLights[2].color = glm::vec3(0.9, 0.9, 0.9); // Neutral white
 */
 
+
+
+    // Origin RGB Lights for shadow testing
     SceneLights[0].color = glm::vec3(1.0, 0.0, 0.0);
     SceneLights[0].node->position = glm::vec3(12.0f, 0.0f, 0.0f); 
     SceneLights[1].color = glm::vec3(0.0, 0.0, 1.0); 
@@ -434,6 +437,7 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 }
 
 // I think a lot of this could be moved to updateNodeTransformations or renderNode, but I think the separation of concerns is a bit more readable.
+// Plus, this information is constant between each node, only varies for a frame - so to recalculate it for each node isn't efficient.
 void uploadUniforms() {
     LightSource lightData[NUM_LIGHT_SOURCES];
 
@@ -457,11 +461,12 @@ void uploadUniforms() {
     }
 
     // Camera position for reflections
-    GLint cameraUniformLocation = glGetUniformLocation(shader->get(), "u_cameraPosition");
+    //GLint cameraUniformLocation = glGetUniformLocation(shader->get(), "u_cameraPosition"); // Old way I found online before learning about shaders helper func.
+    GLint cameraUniformLocation = shader->getUniformFromName("u_cameraPosition");
     glUniform3fv(cameraUniformLocation, 1, glm::value_ptr(cameraPosition));
 
     // Ball position for shadows.
-    GLint ballUniformLoc = glGetUniformLocation(shader->get(), "u_ballPosition");
+    GLint ballUniformLoc = shader->getUniformFromName("u_ballPosition");
     // NOTE to self: This looks correct but Im not exactly sure why the transformation matrix should be omitted?
     // Worth coming back to at some point to understand better.
     glUniform3fv(ballUniformLoc, 1, glm::value_ptr(ballNode->position));

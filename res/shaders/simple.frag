@@ -10,10 +10,7 @@ out vec4 color;
 float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
 
-
 vec3 ambientIntensity = vec3(0.15, 0.15, 0.15);
-//vec3 diffuseColour = vec3(0.4, 0.4, 0.4); // SHould be a uniform later :)
-//vec3 specularColour = vec3(0.7, 0.7, 0.7); // Specular reflection color (also make uniform later??)
 
 struct LightSource {
     vec3 position;
@@ -42,17 +39,16 @@ void main()
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
-    for(int i = 0; i < NUM_LIGHT_SOURCES; i++) {
+    for(int i = 0; i < NUM_LIGHT_SOURCES; ++i) {
         vec3 lightDistance = lightSources[i].position - fragWSPosition;
         vec3 lightDir = normalize(lightDistance);
         float d = length(lightDistance);
         float L = 1.0 / (la + d * lb + d * d * lc);
 
 
-        // // Shadow Check
+        //Shadow Check
         vec3 toLight = lightSources[i].position - fragWSPosition;
-
-       float rejectLength = length(reject(toBall, toLight));
+        float rejectLength = length(reject(toBall, toLight));
         if (
             length(toBall) < length(toLight) // Ball is between light and fragment
             && rejectLength < ballRadius // Fragment is within occlusion width
@@ -60,11 +56,6 @@ void main()
         ) {
             continue;
         }
-
-
-
-
-
 
         // Diffuse
         vec3 diffuseColour = lightSources[i].color;
