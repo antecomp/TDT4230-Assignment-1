@@ -96,12 +96,6 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);
 }
 
-//// A few lines to help you if you've never used c++ structs
-// struct LightSource {
-//     bool a_placeholder_value;
-// };
-// LightSource lightSources[/*Put number of light sources you want here*/];
-
 #define NUM_LIGHT_SOURCES 3
 // Node data for easy use with the existing scene graph layout
 struct SceneLight {
@@ -202,10 +196,6 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->VAOIndexCount       = sphere.indices.size();
 
 
-
-
-
-
     getTimeDeltaSeconds();
 
     std::cout << fmt::format("Initialized scene with {} SceneNodes.", totalChildren(rootNode)) << std::endl;
@@ -214,7 +204,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 }
 
 
-// Prob bad practice, will maybe fix later - expose all this stuff globally so I can referenc it everywhere.
+// Declare these globally so I can reference them easily.
 glm::mat4 projection;
 glm::vec3 cameraPosition;
 glm::mat4 cameraTransform;
@@ -509,7 +499,6 @@ void renderFrame(GLFWwindow* window) {
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
     glViewport(0, 0, windowWidth, windowHeight);
 
-    // Upload light positions to shader (ref note above implementation!)
     uploadUniforms();
 
     renderNode(rootNode);
