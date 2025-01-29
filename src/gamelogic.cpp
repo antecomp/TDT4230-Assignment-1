@@ -103,12 +103,20 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
 // LightSource lightSources[/*Put number of light sources you want here*/];
 
 #define NUM_LIGHT_SOURCES 3
-struct LightSource {
+// Node data for easy use with the existing scene graph layout
+struct SceneLight {
     int id;
     SceneNode* node;
+    glm::vec3 color;
 };
 
-LightSource LightSources[NUM_LIGHT_SOURCES];
+// Uniform Struct format, what gets sent to the frag shader. SceneLight transformed to this.
+struct LightSource {
+    glm::vec3 position;
+    glm::vec3 color;
+};
+
+SceneLight SceneLights[NUM_LIGHT_SOURCES];
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     buffer = new sf::SoundBuffer();
@@ -148,20 +156,25 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
 // Create lights and add them to scene
     for(int i = 0; i < NUM_LIGHT_SOURCES; i++) {
-        LightSources[i].id = i;
+        SceneLights[i].id = i;
         SceneNode* node = createSceneNode();
         node->nodeType = POINT_LIGHT;
-        LightSources[i].node = node;
+        SceneLights[i].node = node;
     }
 
     // Make one of the lights connected to the ball.
-    ballNode->children.push_back(LightSources[0].node);
-    LightSources[0].node->position = glm::vec3(0.0f, 0.0f, 2.0f);
+    ballNode->children.push_back(SceneLights[0].node);
+    SceneLights[0].node->position = glm::vec3(0.0f, 0.0f, 2.0f);
 
     // Just throw the other lights as children of the scene for now.
-    LightSources[1].node->position = glm::vec3(30.0f, 0.0f, -10.0f);
-    boxNode->children.push_back(LightSources[1].node);
-    boxNode->children.push_back(LightSources[2].node);
+    SceneLights[1].node->position = glm::vec3(30.0f, 0.0f, -10.0f);
+    boxNode->children.push_back(SceneLights[1].node);
+    boxNode->children.push_back(SceneLights[2].node);
+
+    // Light colours
+    SceneLights[0].color = glm::vec3(1.0, 0.8, 0.6); // Warm light
+    SceneLights[1].color = glm::vec3(0.6, 0.6, 1.0); // Cool light
+    SceneLights[2].color = glm::vec3(0.9, 0.9, 0.9); // Neutral white
 
 
 
@@ -410,31 +423,37 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     }
 }
 
-// NOTE: Light positions are not updated in the scene graph by the above function.
-// This is a seperate function for actually handling that info and shipping it off to the shader!
-// I *think* I can put this function inside the switch case for renderNode instead, but for now I want it seperate just
-// for clarity while I debug stuff. It's called in render frame before doing any renderNode stuff.
-// Lights uploaded in Worldspace. Assuming phong shading is also happening in WS.
-void uploadLightPositions() {
-    glm::vec3 lightPositions[NUM_LIGHT_SOURCES];
+// I think a lot of this could be moved to updateNodeTransformations or renderNode, but I think the separation of concerns is a bit more readable.
+void uploadUniforms() {
+    LightSource lightData[NUM_LIGHT_SOURCES];
+
     for(int i = 0; i < NUM_LIGHT_SOURCES; ++i) {
-        glm::vec4 transformedPosition = LightSources[i].node->currentTransformationMatrix * glm::vec4(LightSources[i].node->position, 1.0);
-        lightPositions[i] = glm::vec3(transformedPosition);
+        // Collapse/Apply transform onto position for forwaring first...
+        glm::vec4 transformedPosition = SceneLights[i].node->currentTransformationMatrix * glm::vec4(SceneLights[i].node->position, 1.0);
+        lightData[i].position = glm::vec3(transformedPosition);
+        lightData[i].color = SceneLights[i].color;
     }
 
-    // Pass them to the shader. 
-    //(trying out cool named uniform with shader instead of using loc manually because why not)
-    GLint uniformLocation = glGetUniformLocation(shader->get(), "lightPositions");
-    glUniform3fv(uniformLocation, NUM_LIGHT_SOURCES, glm::value_ptr(lightPositions[0]));
+    // Upload each struct member separately
+    for (int i = 0; i < NUM_LIGHT_SOURCES; ++i) {
+        std::string posUniform = fmt::format("lightSources[{}].position", i);
+        std::string colorUniform = fmt::format("lightSources[{}].color", i);
 
+        GLint posLocation = shader->getUniformFromName(posUniform);
+        GLint colorLocation = shader->getUniformFromName(colorUniform);
 
-    // Failing to separate responsibility hard here but since this is just a test helper anyways lets
-    // also just forward the camera position here too :))))
+        glUniform3fv(posLocation, 1, glm::value_ptr(lightData[i].position));
+        glUniform3fv(colorLocation, 1, glm::value_ptr(lightData[i].color));
+    }
+
+    // Camera position for reflections
     GLint cameraUniformLocation = glGetUniformLocation(shader->get(), "u_cameraPosition");
     glUniform3fv(cameraUniformLocation, 1, glm::value_ptr(cameraPosition));
 
-    // Upload ball position as uniform for shadow calculations
+    // Ball position for shadows.
     GLint ballUniformLoc = glGetUniformLocation(shader->get(), "u_ballPosition");
+    // NOTE to self: This looks correct but Im not exactly sure why the transformation matrix should be omitted?
+    // Worth coming back to at some point to understand better.
     glUniform3fv(ballUniformLoc, 1, glm::value_ptr(ballNode->position));
 }
 
@@ -476,7 +495,7 @@ void renderFrame(GLFWwindow* window) {
     glViewport(0, 0, windowWidth, windowHeight);
 
     // Upload light positions to shader (ref note above implementation!)
-    uploadLightPositions();
+    uploadUniforms();
 
     renderNode(rootNode);
 }

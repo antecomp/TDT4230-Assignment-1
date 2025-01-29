@@ -12,10 +12,15 @@ float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
 
 
 vec3 ambientIntensity = vec3(0.15, 0.15, 0.15);
-vec3 diffuseColour = vec3(0.4, 0.4, 0.4); // SHould be a uniform later :)
+//vec3 diffuseColour = vec3(0.4, 0.4, 0.4); // SHould be a uniform later :)
 vec3 specularColour = vec3(0.7, 0.7, 0.7); // Specular reflection color (also make uniform later??)
 
-uniform vec3 lightPositions[NUM_LIGHT_SOURCES];
+struct LightSource {
+    vec3 position;
+    vec3 color;
+};
+
+uniform LightSource lightSources[NUM_LIGHT_SOURCES];
 uniform vec3 u_cameraPosition;
 
 in vec3 fragWSPosition; 
@@ -38,14 +43,14 @@ void main()
     vec3 totalSpecular = vec3(0.0);
 
     for(int i = 0; i < NUM_LIGHT_SOURCES; i++) {
-        vec3 lightDistance = lightPositions[i] - fragWSPosition;
+        vec3 lightDistance = lightSources[i].position - fragWSPosition;
         vec3 lightDir = normalize(lightDistance);
         float d = length(lightDistance);
         float L = 1.0 / (la + d * lb + d * d * lc);
 
 
         // // Shadow Check
-        vec3 toLight = lightPositions[i] - fragWSPosition;
+        vec3 toLight = lightSources[i].position - fragWSPosition;
 
        float rejectLength = length(reject(toBall, toLight));
         if (
@@ -62,6 +67,7 @@ void main()
 
 
         // Diffuse
+        vec3 diffuseColour = lightSources[i].color;
         float diff = max(dot(normal, lightDir), 0.0); 
         totalDiffuse += L * diff * diffuseColour;
 
