@@ -1,4 +1,4 @@
-#include <iostream>
+//#include <iostream>
 #include "glfont.h"
 
 Mesh generateTextGeometryBuffer(std::string text, float characterHeightOverWidth, float totalTextWidth) {
@@ -12,6 +12,7 @@ Mesh generateTextGeometryBuffer(std::string text, float characterHeightOverWidth
 
     mesh.vertices.resize(vertexCount);
     mesh.indices.resize(indexCount);
+    mesh.textureCoordinates.resize(vertexCount); // This is here to preallocate vector size for "at" (segfaults without.)
 
     for(unsigned int i = 0; i < text.length(); i++)
     {

@@ -14,7 +14,8 @@
 #include <fstream>
 
 enum SceneNodeType {
-	GEOMETRY, POINT_LIGHT, SPOT_LIGHT
+	GEOMETRY, POINT_LIGHT, SPOT_LIGHT, 
+	GEOMETRY_2D, NORMAL_MAPPED_GEOMETRY // I added these.
 };
 
 struct SceneNode {
@@ -28,6 +29,10 @@ struct SceneNode {
         VAOIndexCount = 0;
 
         nodeType = GEOMETRY;
+
+		// I added these...
+		textureID = 0;
+        normalMapTextureID = 0;  // New normal map texture ID
 
 	}
 
@@ -49,6 +54,13 @@ struct SceneNode {
 	// The ID of the VAO containing the "appearance" of this SceneNode.
 	int vertexArrayObjectID;
 	unsigned int VAOIndexCount;
+
+	// (ID Of) Texture held by the node (I added this)
+	unsigned int textureID;
+
+	// Normal map (ID) of normal map (I also added this...)
+	unsigned int normalMapTextureID;
+
 
 	// Node type is used to determine how to handle the contents of a node
 	SceneNodeType nodeType;

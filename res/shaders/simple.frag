@@ -34,8 +34,17 @@ float la = 0.003;
 float lb = 0.001;
 float lc = 0.002;
 
+uniform bool performPhong;
+
 void main()
 {
+
+    // I.e used for our text layer.
+    if(!performPhong) {
+        color = vec4(1.0, 0.8, 0.2, 1.0); 
+        return;
+    }
+
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
@@ -44,18 +53,6 @@ void main()
         vec3 lightDir = normalize(lightDistance);
         float d = length(lightDistance);
         float L = 1.0 / (la + d * lb + d * d * lc);
-
-
-        // //Shadow Check (Harsh cutoff with continue)
-        // vec3 toLight = lightSources[i].position - fragWSPosition;
-        // float rejectLength = length(reject(toBall, toLight));
-        // if (
-        //     length(toBall) < length(toLight) // Ball is between light and fragment
-        //     && rejectLength < ballRadius // Fragment is within occlusion width
-        //     && dot(toBall, toLight) > 0.0 // Ball is "blocking" light (not behind it)
-        // ) {
-        //     continue;
-        // }
 
         // For smooth shadows we should instead scale some factor
         // We can just scale L directly to make our lives easier...

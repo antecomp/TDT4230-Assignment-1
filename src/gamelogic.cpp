@@ -32,7 +32,8 @@ PNGImage fontTexture = loadPNGFile("../res/textures/charmap.png");
 
 // Todo: move this elsewhere?
 GLuint createTexture(const PNGImage& image) {
-    GLuint textureID;
+    //GLuint textureID;
+    unsigned int textureID;
 
     // Similar syntax and idea to making our VBOs and such...
     glGenTextures(1, &textureID);
@@ -78,6 +79,9 @@ SceneNode* rootNode;
 SceneNode* boxNode;
 SceneNode* ballNode;
 SceneNode* padNode;
+
+
+SceneNode* textNode;
 
 double ballRadius = 3.0f;
 
@@ -230,6 +234,22 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->vertexArrayObjectID = ballVAO;
     ballNode->VAOIndexCount       = sphere.indices.size();
 
+    // I added all this, Mesh stuff for text
+    Mesh textMesh = generateTextGeometryBuffer("Hello", 39.0/29, 20);
+    unsigned int textVAO = generateBuffer(textMesh);
+    textNode = createSceneNode();
+    textNode->nodeType = GEOMETRY_2D;
+    textNode->vertexArrayObjectID = textVAO;
+    textNode->VAOIndexCount = textMesh.indices.size();
+    boxNode->children.push_back(textNode); // Hell
+    textNode->position = glm::vec3(0.0f, 0.0f, 10.0f);
+    //rootNode->children.push_back(textNode);
+    //textNode->position = glm::vec3(0.0f, -5.0f, -90.0f);
+
+
+
+
+    ////////////
 
     getTimeDeltaSeconds();
 
@@ -454,7 +474,9 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
         case GEOMETRY: break;
         case POINT_LIGHT: break;
         case SPOT_LIGHT: break;
-    }
+        case GEOMETRY_2D: break;
+        case NORMAL_MAPPED_GEOMETRY: break;
+    }        
 
     for(SceneNode* child : node->children) {
         updateNodeTransformations(child, node->currentTransformationMatrix);
@@ -495,6 +517,12 @@ void uploadUniforms() {
     // NOTE to self: This looks correct but Im not exactly sure why the transformation matrix should be omitted?
     // Worth coming back to at some point to understand better.
     glUniform3fv(ballUniformLoc, 1, glm::value_ptr(ballNode->position));
+
+
+    // // asjkhasd
+    // GLint performPhongBoolUniformLocation = shader->getUniformFromName("performPhong");
+    // // There isn't  "bool" uniform, you use int with 0 or 1
+    // glUniform1i(performPhongBoolUniformLocation, false);
 }
 
 void renderNode(SceneNode* node) {
@@ -513,6 +541,11 @@ void renderNode(SceneNode* node) {
     // Inverse of the transpose + only top 3x3 matrix (we dont translate our normals.)
     glUniformMatrix3fv(7, 1, GL_FALSE, glm::value_ptr(InvTranspose));
 
+
+    // Toggle between enabling phong or not, default is yes (turned off in switch statement.)
+    GLint performPhongULoc = shader->getUniformFromName("performPhong");
+    glUniform1i(performPhongULoc, true); // We use 1int for bools, tldr it sends it to the gpu as 0/1
+
     switch(node->nodeType) {
         case GEOMETRY:
             if(node->vertexArrayObjectID != -1) {
@@ -522,6 +555,14 @@ void renderNode(SceneNode* node) {
             break;
         case POINT_LIGHT: break;
         case SPOT_LIGHT: break;
+        case GEOMETRY_2D: 
+            if(node->vertexArrayObjectID != -1) {
+                // turn phong shading off with uniform here.
+                glUniform1i(performPhongULoc, false);
+                glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+            }
+        break;
+        case NORMAL_MAPPED_GEOMETRY: break;
     }
 
     for(SceneNode* child : node->children) {
