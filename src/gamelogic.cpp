@@ -608,15 +608,15 @@ void renderNode(SceneNode* node) {
 
 
                 // THIS SHOWS NOISE AS EXPECTED
-                std::vector<unsigned char> noiseData = generateNoiseTextureRGBA(128, 128);
-                GLuint noiseTextureID;
-                glGenTextures(1, &noiseTextureID);
-                glBindTexture(GL_TEXTURE_2D, noiseTextureID);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, noiseData.data());
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glBindTexture(GL_TEXTURE_2D, noiseTextureID);
-                glBindTextureUnit(0, noiseTextureID);
+                // std::vector<unsigned char> noiseData = generateNoiseTextureRGBA(128, 128);
+                // GLuint noiseTextureID;
+                // glGenTextures(1, &noiseTextureID);
+                // glBindTexture(GL_TEXTURE_2D, noiseTextureID);
+                // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, noiseData.data());
+                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                // glBindTexture(GL_TEXTURE_2D, noiseTextureID);
+                // glBindTextureUnit(0, noiseTextureID);
 
 
 

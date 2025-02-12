@@ -47,9 +47,13 @@ void main()
         vec4 sampled = texture(textSampler, textureCoordinates);
         color = vec4(1.0, 0.8, 0.2, 1.0); 
         color = sampled;
-        color = vec4(sampled.r, sampled.g, sampled.b, 1.0); // Show alpha in grayscale
-        //color = texture(textSampler, textureCoordinates);
+        //color = vec4(sampled.r, sampled.g, sampled.b, 1.0); // Show alpha in grayscale
+        //vec2 screenUV = gl_FragCoord.xy / vec2(128.0, 128.0); // Scale to match the noise texture size
+        //vec2 screenUV = gl_FragCoord.xy / textureSize(textSampler, 0);
+        //color = texture(textSampler, screenUV);
+        color = texture(textSampler, textureCoordinates);
         //color = vec4(textureCoordinates, 0.0, 1.0);
+        //color = vec4(textureCoordinates.x, 0.0, 0.0, 1.0); // Red = U coordinate
         return;
     }
 

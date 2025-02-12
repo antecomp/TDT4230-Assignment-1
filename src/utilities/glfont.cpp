@@ -1,8 +1,12 @@
 //#include <iostream>
 #include "glfont.h"
+#include <iostream>
 
 Mesh generateTextGeometryBuffer(std::string text, float characterHeightOverWidth, float totalTextWidth) {
     float characterWidth = totalTextWidth / float(text.length());
+
+    float charWidthUV = 1.0f / 128.0f;  // Normalized width of each character in the texture (IMPORTANT :D)
+
     float characterHeight = characterHeightOverWidth * characterWidth;
 
     unsigned int vertexCount = 4 * text.length();
@@ -21,11 +25,13 @@ Mesh generateTextGeometryBuffer(std::string text, float characterHeightOverWidth
         char character = text[i];
         //int charIndex = character - 32; // nevermind the texture has 31 X's to do this for us lol
         int charCol = character;
-        float u_min = charCol * characterWidth;
-        float u_max = u_min + characterWidth;
+
+        float u_min = charCol * charWidthUV;
+        float u_max = u_min + charWidthUV;
+        std::cout << u_min << " " << u_max;
         // Might need to flip these if I messed up the coordinate system in my head :)
-        float v_min = 1; // always 1 I think? The top
-        float v_max = 0; // always 0 I think? The bottom.
+        float v_min = 0; // always 1 I think? The top
+        float v_max = 1; // always 0 I think? The bottom.
 
         mesh.textureCoordinates.at(4 * i + 0) = {u_min, v_min}; // BL
         mesh.textureCoordinates.at(4 * i + 1) = {u_max, v_min}; // BR
