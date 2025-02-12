@@ -272,7 +272,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->VAOIndexCount       = sphere.indices.size();
 
     // I added all this, Mesh stuff for text
-    Mesh textMesh = generateTextGeometryBuffer("Hello From OpenGL", 39.0/29, 600);
+    Mesh textMesh = generateTextGeometryBuffer("Awesome Breakout Clone", 39.0/29, 300);
     unsigned int textVAO = generateBuffer(textMesh);
     textNode = createSceneNode();
     textNode->nodeType = GEOMETRY_2D;
@@ -284,7 +284,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     //textNode->position = glm::vec3(0.0f, -5.0f, -90.0f);
     //textNode->position = glm::vec3(0.0f, -0.25f, 0.999999999999999f);
     //textNode->position = glm::vec3(20.0f, 200.0f, 0.0f);
-    textNode->position = glm::vec3(windowWidth / 2.0, windowHeight / 2.0, 0.0f);
+    textNode->position = glm::vec3(0, windowHeight - 20.0, 0.0f);
 
 
     // rootNode->children.push_back(textNode); // Hell
