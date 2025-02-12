@@ -34,13 +34,13 @@ float la = 0.003;
 float lb = 0.001;
 float lc = 0.002;
 
-uniform bool performPhong;
+uniform bool is2D;
 
 void main()
 {
 
     // I.e used for our text layer.
-    if(!performPhong) {
+    if(is2D) {
         color = vec4(1.0, 0.8, 0.2, 1.0); 
         return;
     }

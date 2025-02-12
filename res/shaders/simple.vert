@@ -14,11 +14,18 @@ out layout(location = 1) vec2 textureCoordinates_out;
 
 out vec3 fragWSPosition; // Worlspace position (no view/projection transform)
 
+uniform bool is2D;
+
 void main()
 {
+    if(is2D) {
+        gl_Position = vec4(position, 1.0f);
+        return;
+    }
+
     normal_out = normalize(normalTransform * normal_in);
     //normal_out = normal_in;
     textureCoordinates_out = textureCoordinates_in;
     fragWSPosition = (M * vec4(position, 1.0f)).xyz;
-    gl_Position = MVP * vec4(position, 1.0f);
+    gl_Position = MVP * vec4(position, 1.0f); 
 }

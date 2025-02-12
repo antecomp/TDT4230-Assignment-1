@@ -235,17 +235,21 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->VAOIndexCount       = sphere.indices.size();
 
     // I added all this, Mesh stuff for text
-    Mesh textMesh = generateTextGeometryBuffer("Hello", 39.0/29, 20);
+    Mesh textMesh = generateTextGeometryBuffer("Hello", 39.0/29, 0.5);
     unsigned int textVAO = generateBuffer(textMesh);
     textNode = createSceneNode();
     textNode->nodeType = GEOMETRY_2D;
     textNode->vertexArrayObjectID = textVAO;
     textNode->VAOIndexCount = textMesh.indices.size();
-    boxNode->children.push_back(textNode); // Hell
-    textNode->position = glm::vec3(0.0f, 0.0f, 10.0f);
-    //rootNode->children.push_back(textNode);
+    // boxNode->children.push_back(textNode); // Hell
+    // textNode->position = glm::vec3(0.0f, 0.0f, 10.0f);
+    rootNode->children.push_back(textNode);
     //textNode->position = glm::vec3(0.0f, -5.0f, -90.0f);
+    textNode->position = glm::vec3(0.0f, -0.25f, 0.999999999999999f);
 
+
+    // rootNode->children.push_back(textNode); // Hell
+    // textNode->position = glm::vec3(0.0f, 0.0f, 0.0f);
 
 
 
@@ -543,8 +547,8 @@ void renderNode(SceneNode* node) {
 
 
     // Toggle between enabling phong or not, default is yes (turned off in switch statement.)
-    GLint performPhongULoc = shader->getUniformFromName("performPhong");
-    glUniform1i(performPhongULoc, true); // We use 1int for bools, tldr it sends it to the gpu as 0/1
+    GLint is2DULoc = shader->getUniformFromName("is2D");
+    glUniform1i(is2DULoc, false); // We use 1int for bools, tldr it sends it to the gpu as 0/1
 
     switch(node->nodeType) {
         case GEOMETRY:
@@ -557,9 +561,12 @@ void renderNode(SceneNode* node) {
         case SPOT_LIGHT: break;
         case GEOMETRY_2D: 
             if(node->vertexArrayObjectID != -1) {
+                glDepthFunc(GL_ALWAYS);  // Always draw the text, ignoring depth
                 // turn phong shading off with uniform here.
-                glUniform1i(performPhongULoc, false);
+                glUniform1i(is2DULoc, true);
+                glBindVertexArray(node->vertexArrayObjectID); // totally didnt forget to put this and struggle to debug for hours :^)
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+                glDepthFunc(GL_LESS);  // Reset to default
             }
         break;
         case NORMAL_MAPPED_GEOMETRY: break;
@@ -578,4 +585,9 @@ void renderFrame(GLFWwindow* window) {
     uploadUniforms();
 
     renderNode(rootNode);
+
+glDepthMask(GL_FALSE);  // Disable writing to depth buffer
+renderNode(textNode);
+glDepthMask(GL_TRUE);   // Re-enable depth writing for future frames
+
 }
