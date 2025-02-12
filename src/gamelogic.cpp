@@ -15,9 +15,11 @@
 #include <fmt/format.h>
 #include "gamelogic.h"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/vector_float3.hpp"
 #include "glm/fwd.hpp"
 #include "glm/matrix.hpp"
 #include "sceneGraph.hpp"
+#include "utilities/window.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
@@ -235,7 +237,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->VAOIndexCount       = sphere.indices.size();
 
     // I added all this, Mesh stuff for text
-    Mesh textMesh = generateTextGeometryBuffer("Hello", 39.0/29, 0.5);
+    Mesh textMesh = generateTextGeometryBuffer("Hello", 39.0/29, 50);
     unsigned int textVAO = generateBuffer(textMesh);
     textNode = createSceneNode();
     textNode->nodeType = GEOMETRY_2D;
@@ -246,7 +248,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     rootNode->children.push_back(textNode);
     //textNode->position = glm::vec3(0.0f, -5.0f, -90.0f);
     //textNode->position = glm::vec3(0.0f, -0.25f, 0.999999999999999f);
-    textNode->position = glm::vec3(0.0f, -0.25f, 0.0f);
+    //textNode->position = glm::vec3(20.0f, 200.0f, 0.0f);
+    textNode->position = glm::vec3(windowWidth / 2.0, windowHeight / 2.0, 0.0f);
 
 
     // rootNode->children.push_back(textNode); // Hell
@@ -563,6 +566,14 @@ void renderNode(SceneNode* node) {
         case GEOMETRY_2D: 
             if(node->vertexArrayObjectID != -1) {
                 // turn phong shading off with uniform here.
+                glm::mat4 orthoProjection = glm::ortho(
+                    0.0f, (float)windowWidth,  // Left to Right
+                    0.0f, (float)windowHeight,   // Bottom to Top (flipped because OpenGL NDC has -Y up)
+                    -1.0f, 1.0f                 // Near and Far (we only need a small depth range)
+                );
+                GLuint orthoULoc = shader->getUniformFromName("Ortho");
+                glUniformMatrix4fv(orthoULoc, 1, GL_FALSE, glm::value_ptr(orthoProjection));
+                std::cout << "Ortho Projection: " << glm::to_string(orthoProjection) << std::endl;
                 glUniform1i(is2DULoc, true);
                 glBindVertexArray(node->vertexArrayObjectID); // totally didnt forget to put this and struggle to debug for hours :^)
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);

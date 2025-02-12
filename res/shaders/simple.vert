@@ -16,10 +16,12 @@ out vec3 fragWSPosition; // Worlspace position (no view/projection transform)
 
 uniform bool is2D;
 
+uniform mat4 Ortho;
+
 void main()
 {
     if(is2D) {
-        gl_Position = vec4(position, 1.0f);
+        gl_Position = Ortho * M* vec4(position, 1.0f);
         return;
     }
 
