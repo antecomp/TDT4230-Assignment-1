@@ -73,13 +73,13 @@ GLuint createTexture(const PNGImage& image) {
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // Configure sampling for the texture...
-    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Texels smaller... (This is just pure interpolation - no mipmap)
-    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Texels smaller... (This is just pure interpolation - no mipmap)
+    // glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // MipMap settings : X_MIPMAP_Y   X -> interpolation between mipmaps,  Y -> interpolation for sampling the mipmap itself.
-    //glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST); // Apply mipmap as texel smaller sampling thingy like this :D
+    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST); // Apply mipmap as texel smaller sampling thingy like this :D
 
-    //glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Interpolate when texel larger than pixels.
+    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Interpolate when texel larger than pixels.
 
 
 
@@ -600,14 +600,10 @@ void renderNode(SceneNode* node) {
                 // Texturing stuff
                 auto textTextureID = createTexture(fontImage);
                 glBindTexture(GL_TEXTURE_2D, textTextureID);
-                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 glBindTextureUnit(0, textTextureID);
 
 
-                // THIS SHOWS NOISE AS EXPECTED
+                // (DEBUG/TEST) THIS SHOWS NOISE AS EXPECTED
                 // std::vector<unsigned char> noiseData = generateNoiseTextureRGBA(128, 128);
                 // GLuint noiseTextureID;
                 // glGenTextures(1, &noiseTextureID);
