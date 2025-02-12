@@ -245,7 +245,8 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     // textNode->position = glm::vec3(0.0f, 0.0f, 10.0f);
     rootNode->children.push_back(textNode);
     //textNode->position = glm::vec3(0.0f, -5.0f, -90.0f);
-    textNode->position = glm::vec3(0.0f, -0.25f, 0.999999999999999f);
+    //textNode->position = glm::vec3(0.0f, -0.25f, 0.999999999999999f);
+    textNode->position = glm::vec3(0.0f, -0.25f, 0.0f);
 
 
     // rootNode->children.push_back(textNode); // Hell
@@ -561,12 +562,10 @@ void renderNode(SceneNode* node) {
         case SPOT_LIGHT: break;
         case GEOMETRY_2D: 
             if(node->vertexArrayObjectID != -1) {
-                glDepthFunc(GL_ALWAYS);  // Always draw the text, ignoring depth
                 // turn phong shading off with uniform here.
                 glUniform1i(is2DULoc, true);
                 glBindVertexArray(node->vertexArrayObjectID); // totally didnt forget to put this and struggle to debug for hours :^)
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
-                glDepthFunc(GL_LESS);  // Reset to default
             }
         break;
         case NORMAL_MAPPED_GEOMETRY: break;
@@ -586,8 +585,6 @@ void renderFrame(GLFWwindow* window) {
 
     renderNode(rootNode);
 
-glDepthMask(GL_FALSE);  // Disable writing to depth buffer
-renderNode(textNode);
-glDepthMask(GL_TRUE);   // Re-enable depth writing for future frames
+    //renderNode(textNode);
 
 }
