@@ -210,6 +210,20 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     rootNode->children.push_back(ballNode);
 
 
+    // Change box to be normal map type (I added this)
+    boxNode->nodeType = NORMAL_MAPPED_GEOMETRY;
+
+    // Load and apply texture/normal map for box, store them there...
+    PNGImage bricksColImage = loadPNGFile("../res/textures/Brick03_col.png");
+    auto brickColTextureID = createTexture(bricksColImage);
+    boxNode->textureID = brickColTextureID;
+
+    PNGImage bricksNormImage = loadPNGFile("../res/textures/Brick03_nrm.png");
+    auto brickNormTextureID = createTexture(bricksNormImage);
+    boxNode->normalMapTextureID = brickNormTextureID;
+
+
+
 // Create lights and add them to scene
     for(int i = 0; i < NUM_LIGHT_SOURCES; i++) {
         SceneLights[i].id = i;
@@ -236,7 +250,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
 
     // Origin RGB Lights for shadow testing
-    SceneLights[0].color = glm::vec3(1.0, 0.0, 0.0);
+    SceneLights[0].color = glm::vec3(1.0, 1.0, 1.0);
     SceneLights[0].node->position = glm::vec3(12.0f, 0.0f, 0.0f); 
     SceneLights[1].color = glm::vec3(0.0, 0.0, 1.0); 
     SceneLights[1].node->position = glm::vec3(-12.0f, 0.0f, 0.0f); 
@@ -575,6 +589,10 @@ void renderNode(SceneNode* node) {
     GLint is2DULoc = shader->getUniformFromName("is2D");
     glUniform1i(is2DULoc, false); // We use 1int for bools, tldr it sends it to the gpu as 0/1
 
+    // Similarly, toggle between modes for our normal mapping stuff...
+    GLuint hasNormalMappedGeomLoc = shader->getUniformFromName("hasNormalMappedGeom");
+    glUniform1i(hasNormalMappedGeomLoc, false);
+
     switch(node->nodeType) {
         case GEOMETRY:
             if(node->vertexArrayObjectID != -1) {
@@ -599,7 +617,7 @@ void renderNode(SceneNode* node) {
 
                 // Texturing stuff
                 auto textTextureID = createTexture(fontImage);
-                glBindTexture(GL_TEXTURE_2D, textTextureID);
+                glBindTexture(GL_TEXTURE_2D, textTextureID); // idk why I had this, works without. Keeping comment just in case.
                 glBindTextureUnit(0, textTextureID);
 
 
@@ -620,7 +638,21 @@ void renderNode(SceneNode* node) {
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
         break;
-        case NORMAL_MAPPED_GEOMETRY: break;
+        case NORMAL_MAPPED_GEOMETRY:
+            if(node->vertexArrayObjectID != -1) {
+
+                glUniform1i(hasNormalMappedGeomLoc, true);
+
+                glBindTexture(GL_TEXTURE_2D, node->textureID);
+                glBindTextureUnit(1, node->textureID);
+
+                glBindTexture(GL_TEXTURE_2D, node->normalMapTextureID);
+                glBindTextureUnit(2, node->normalMapTextureID);
+
+                glBindVertexArray(node->vertexArrayObjectID);
+                glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+            }
+        break;
     }
 
     for(SceneNode* child : node->children) {

@@ -28,7 +28,7 @@ Mesh generateTextGeometryBuffer(std::string text, float characterHeightOverWidth
 
         float u_min = charCol * charWidthUV;
         float u_max = u_min + charWidthUV;
-        std::cout << u_min << " " << u_max;
+        //std::cout << u_min << " " << u_max;
         // Might need to flip these if I messed up the coordinate system in my head :)
         float v_min = 0; // always 1 I think? The top
         float v_max = 1; // always 0 I think? The bottom.

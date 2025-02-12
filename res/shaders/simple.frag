@@ -1,6 +1,7 @@
 #version 450 core
 
-#define NUM_LIGHT_SOURCES 3
+//#define NUM_LIGHT_SOURCES 3
+#define NUM_LIGHT_SOURCES 1
 
 in layout(location = 0) vec3 normal;
 in layout(location = 1) vec2 textureCoordinates;
@@ -35,9 +36,13 @@ float lb = 0.001;
 float lc = 0.002;
 
 uniform bool is2D;
+uniform bool hasNormalMappedGeom;
 
 
 layout(binding = 0) uniform sampler2D textSampler;
+
+layout(binding = 1) uniform sampler2D diffuseSampler;
+layout(binding = 2) uniform sampler2D normalMapSampler;
 
 void main()
 {
@@ -67,6 +72,36 @@ void main()
         return;
     }
 
+
+
+        vec3 normalToUse = normal;
+        vec3 baseDiffuseToUse = vec3(1.0, 1.0, 1.0);
+
+        if (hasNormalMappedGeom) {
+            vec3 diffuseColor = texture(diffuseSampler, textureCoordinates).rgb;
+            vec3 normalMapColor = texture(normalMapSampler, textureCoordinates).rgb;
+
+            // Swap to [-1,1]
+            vec3 normalMapped = texture(normalMapSampler, textureCoordinates).rgb;
+            normalMapped = normalMapped * 2.0 - 1.0;
+
+            // (test) Both work
+            // color = vec4(normalMapColor, 1.0);
+            // color = vec4(diffuseColor, 1.0);
+            color = vec4(normalMapped, 1.0);
+
+            //return;
+
+            normalToUse = normalMapped;
+            baseDiffuseToUse = diffuseColor;
+        }
+
+
+
+
+
+
+
     vec3 totalDiffuse = vec3(0.0);
     vec3 totalSpecular = vec3(0.0);
 
@@ -95,11 +130,11 @@ void main()
 
         // Diffuse
         vec3 diffuseColour = lightSources[i].color;
-        float diff = max(dot(normal, lightDir), 0.0); 
+        float diff = max(dot(normalToUse, lightDir), 0.0); 
         totalDiffuse += L * diff * diffuseColour;
 
         // Specular Reflect
-        vec3 reflectDir = reflect(-lightDir, normal); // For ease we're directly reflecting back towards light
+        vec3 reflectDir = reflect(-lightDir, normalToUse); // For ease we're directly reflecting back towards light
         vec3 viewDir = normalize(u_cameraPosition - fragWSPosition); // View direction toward the camera
 
         // Specular intensity = reflected vector dot view (surface 2 eye)
@@ -112,7 +147,7 @@ void main()
         totalSpecular += L * spec * specularColour;
     }
 
-    vec3 finalColour = ambientIntensity + totalDiffuse + totalSpecular + dither(gl_FragCoord.xy);
+    vec3 finalColour = baseDiffuseToUse * (ambientIntensity + totalDiffuse + totalSpecular + dither(gl_FragCoord.xy));
 
     color = vec4(finalColour, 1.0);
 
