@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 
 in layout(location = 0) vec3 position;
 in layout(location = 1) vec3 normal_in;
@@ -22,6 +22,7 @@ void main()
 {
     if(is2D) {
         gl_Position = Ortho * M* vec4(position, 1.0f);
+        textureCoordinates_out = textureCoordinates_in;
         return;
     }
 

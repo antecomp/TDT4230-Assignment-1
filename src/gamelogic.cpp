@@ -29,8 +29,28 @@
 #include "utilities/imageLoader.hpp"
 #include "utilities/glfont.h"
 
+#include <vector>
+#include <cstdlib> // For rand()
+#include <ctime>   // For seeding rand()
 
-PNGImage fontTexture = loadPNGFile("../res/textures/charmap.png");
+std::vector<unsigned char> generateNoiseTextureRGBA(int width, int height) {
+    std::vector<unsigned char> noiseTexture(width * height * 4);
+
+    std::srand(std::time(nullptr));  // Seed random generator
+
+    for (int i = 0; i < width * height * 4; i += 4) {
+        noiseTexture[i + 0] = std::rand() % 256; // R
+        noiseTexture[i + 1] = std::rand() % 256; // G
+        noiseTexture[i + 2] = std::rand() % 256; // B
+        noiseTexture[i + 3] = 255;               // A (fully opaque)
+    }
+
+    return noiseTexture;
+}
+
+
+
+PNGImage fontImage = loadPNGFile("../res/textures/charmap.png");
 
 // Todo: move this elsewhere?
 GLuint createTexture(const PNGImage& image) {
@@ -53,12 +73,13 @@ GLuint createTexture(const PNGImage& image) {
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // Configure sampling for the texture...
-    //glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Texels smaller... (This is just pure interpolation - no mipmap)
+    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Texels smaller... (This is just pure interpolation - no mipmap)
+    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // MipMap settings : X_MIPMAP_Y   X -> interpolation between mipmaps,  Y -> interpolation for sampling the mipmap itself.
-    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST); // Apply mipmap as texel smaller sampling thingy like this :D
+    //glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST); // Apply mipmap as texel smaller sampling thingy like this :D
 
-    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Interpolate when texel larger than pixels.
+    //glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Interpolate when texel larger than pixels.
 
 
 
@@ -237,7 +258,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->VAOIndexCount       = sphere.indices.size();
 
     // I added all this, Mesh stuff for text
-    Mesh textMesh = generateTextGeometryBuffer("Hello", 39.0/29, 50);
+    Mesh textMesh = generateTextGeometryBuffer("Hello From OpenGL", 39.0/29, 600);
     unsigned int textVAO = generateBuffer(textMesh);
     textNode = createSceneNode();
     textNode->nodeType = GEOMETRY_2D;
@@ -564,8 +585,9 @@ void renderNode(SceneNode* node) {
         case POINT_LIGHT: break;
         case SPOT_LIGHT: break;
         case GEOMETRY_2D: 
-            if(node->vertexArrayObjectID != -1) {
-                // turn phong shading off with uniform here.
+            if(node->vertexArrayObjectID != -1) { // Note to self: I should probably extract a lot of this behavior elsewhere!
+                
+                // Positioning/Shading Stuf...
                 glm::mat4 orthoProjection = glm::ortho(
                     0.0f, (float)windowWidth,  // Left to Right
                     0.0f, (float)windowHeight,   // Bottom to Top (flipped because OpenGL NDC has -Y up)
@@ -573,8 +595,31 @@ void renderNode(SceneNode* node) {
                 );
                 GLuint orthoULoc = shader->getUniformFromName("Ortho");
                 glUniformMatrix4fv(orthoULoc, 1, GL_FALSE, glm::value_ptr(orthoProjection));
-                std::cout << "Ortho Projection: " << glm::to_string(orthoProjection) << std::endl;
                 glUniform1i(is2DULoc, true);
+
+                // Texturing stuff
+                auto textTextureID = createTexture(fontImage);
+                glBindTexture(GL_TEXTURE_2D, textTextureID);
+                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glBindTextureUnit(0, textTextureID);
+
+
+                // THIS SHOWS NOISE AS EXPECTED
+                std::vector<unsigned char> noiseData = generateNoiseTextureRGBA(128, 128);
+                GLuint noiseTextureID;
+                glGenTextures(1, &noiseTextureID);
+                glBindTexture(GL_TEXTURE_2D, noiseTextureID);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, noiseData.data());
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glBindTexture(GL_TEXTURE_2D, noiseTextureID);
+                glBindTextureUnit(0, noiseTextureID);
+
+
+
                 glBindVertexArray(node->vertexArrayObjectID); // totally didnt forget to put this and struggle to debug for hours :^)
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
