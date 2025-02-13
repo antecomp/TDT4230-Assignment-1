@@ -27,6 +27,63 @@ unsigned int generateBuffer(Mesh &mesh) {
         generateAttribute(2, 2, mesh.textureCoordinates, false);
     }
 
+
+    // Tangent/Bitangent Stuff For Normal Mapping (TBN)...
+
+    std::vector<glm::vec3> tangents(mesh.vertices.size(), glm::vec3(0.0f));
+    std::vector<glm::vec3> bitangents(mesh.vertices.size(), glm::vec3(0.0f));
+
+
+    // Todo: Move this to a separate method for better readibility.
+    for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+        unsigned int i0 = mesh.indices[i];
+        unsigned int i1 = mesh.indices[i + 1];
+        unsigned int i2 = mesh.indices[i + 2];
+
+        glm::vec3 &v0 = mesh.vertices[i0];
+        glm::vec3 &v1 = mesh.vertices[i1];
+        glm::vec3 &v2 = mesh.vertices[i2];
+
+        glm::vec2 &uv0 = mesh.textureCoordinates[i0];
+        glm::vec2 &uv1 = mesh.textureCoordinates[i1];
+        glm::vec2 &uv2 = mesh.textureCoordinates[i2];
+
+        // All the deltas, used to basically make the tangent vectors go in the direction of 
+        // u an v across our mesh...
+        glm::vec3 deltaPos1 = v1 - v0;
+        glm::vec3 deltaPos2 = v2 - v0;
+        glm::vec2 deltaUV1 = uv1 - uv0;
+        glm::vec2 deltaUV2 = uv2 - uv0;
+
+        float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+        glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+        glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
+
+
+        // Accumulate per-vertex
+        tangents[i0] += tangent;
+        tangents[i1] += tangent;
+        tangents[i2] += tangent;
+        bitangents[i0] += bitangent;
+        bitangents[i1] += bitangent;
+        bitangents[i2] += bitangent;
+
+        // Skipping whatever that normalization thing is...
+    }
+
+    // Upload Them To Shader!!!!!!
+    generateAttribute(3, 3, tangents, false);
+    generateAttribute(4, 3, bitangents, false);
+
+
+
+
+
+
+
+
+
+
     unsigned int indexBufferID;
     glGenBuffers(1, &indexBufferID);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);

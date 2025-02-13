@@ -6,6 +6,8 @@
 in layout(location = 0) vec3 normal;
 in layout(location = 1) vec2 textureCoordinates;
 
+in layout(location = 3) mat3 TBN;
+
 out vec4 color;
 
 float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
@@ -88,11 +90,11 @@ void main()
             // (test) Both work
             // color = vec4(normalMapColor, 1.0);
             // color = vec4(diffuseColor, 1.0);
-            color = vec4(normalMapped, 1.0);
+            color = vec4(TBN * normalMapped, 1.0);
 
             //return;
 
-            normalToUse = normalMapped;
+            normalToUse = TBN * normalMapped;
             baseDiffuseToUse = diffuseColor;
         }
 
