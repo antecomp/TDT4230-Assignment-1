@@ -1,7 +1,7 @@
 #version 450 core
 
 //#define NUM_LIGHT_SOURCES 3
-#define NUM_LIGHT_SOURCES 1
+#define NUM_LIGHT_SOURCES 3
 
 in layout(location = 0) vec3 normal;
 in layout(location = 1) vec2 textureCoordinates;
@@ -87,13 +87,14 @@ void main()
             vec3 normalMapped = texture(normalMapSampler, textureCoordinates).rgb;
             normalMapped = normalMapped * 2.0 - 1.0;
 
-            // (test) Both work
+            // (test) All work
             // color = vec4(normalMapColor, 1.0);
             // color = vec4(diffuseColor, 1.0);
-            color = vec4(TBN * normalMapped, 1.0);
+            //color = vec4(normalMapped, 1.0);
+            // color = vec4(TBN * normalMapped, 1.0);
+            // return;
 
-            //return;
-
+            //normalToUse = normalMapped;
             normalToUse = TBN * normalMapped;
             baseDiffuseToUse = diffuseColor;
         }

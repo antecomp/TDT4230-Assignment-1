@@ -14,27 +14,14 @@ unsigned int generateAttribute(int id, int elementsPerEntry, std::vector<T> data
     return bufferID;
 }
 
-unsigned int generateBuffer(Mesh &mesh) {
-    unsigned int vaoID;
-    glGenVertexArrays(1, &vaoID);
-    glBindVertexArray(vaoID);
 
-    generateAttribute(0, 3, mesh.vertices, false);
-    if (mesh.normals.size() > 0) {
-        generateAttribute(1, 3, mesh.normals, true);
-    }
-    if (mesh.textureCoordinates.size() > 0) {
-        generateAttribute(2, 2, mesh.textureCoordinates, false);
-    }
-
-
-    // Tangent/Bitangent Stuff For Normal Mapping (TBN)...
-
-    std::vector<glm::vec3> tangents(mesh.vertices.size(), glm::vec3(0.0f));
-    std::vector<glm::vec3> bitangents(mesh.vertices.size(), glm::vec3(0.0f));
-
-
-    // Todo: Move this to a separate method for better readibility.
+void getTangentBasisForMesh(
+    // Use whole mesh as the input so I can just ref attributes by name.
+    Mesh &mesh,
+    // Use cool ref magic to write to each, used immediately above.
+    std::vector<glm::vec3> &tangents,
+    std::vector<glm::vec3> &bitangents
+) {
     for (size_t i = 0; i < mesh.indices.size(); i += 3) {
         unsigned int i0 = mesh.indices[i];
         unsigned int i1 = mesh.indices[i + 1];
@@ -70,19 +57,31 @@ unsigned int generateBuffer(Mesh &mesh) {
 
         // Skipping whatever that normalization thing is...
     }
+}
+
+unsigned int generateBuffer(Mesh &mesh) {
+    unsigned int vaoID;
+    glGenVertexArrays(1, &vaoID);
+    glBindVertexArray(vaoID);
+
+    generateAttribute(0, 3, mesh.vertices, false);
+    if (mesh.normals.size() > 0) {
+        generateAttribute(1, 3, mesh.normals, true);
+    }
+    if (mesh.textureCoordinates.size() > 0) {
+        generateAttribute(2, 2, mesh.textureCoordinates, false);
+    }
+
+    // Tangent/Bitangent Stuff For Normal Mapping (TBN)...
+
+    std::vector<glm::vec3> tangents(mesh.vertices.size(), glm::vec3(0.0f));
+    std::vector<glm::vec3> bitangents(mesh.vertices.size(), glm::vec3(0.0f));
+
+    getTangentBasisForMesh(mesh, tangents, bitangents);
 
     // Upload Them To Shader!!!!!!
     generateAttribute(3, 3, tangents, false);
     generateAttribute(4, 3, bitangents, false);
-
-
-
-
-
-
-
-
-
 
     unsigned int indexBufferID;
     glGenBuffers(1, &indexBufferID);

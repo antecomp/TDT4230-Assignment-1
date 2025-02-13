@@ -23,9 +23,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-// for debugging
-#include "glm/ext.hpp"
-
 #include "utilities/imageLoader.hpp"
 #include "utilities/glfont.h"
 
@@ -33,6 +30,7 @@
 #include <cstdlib> // For rand()
 #include <ctime>   // For seeding rand()
 
+// Made this as a test texture to make sure my mapping wasn't stretched or weird.
 std::vector<unsigned char> generateNoiseTextureRGBA(int width, int height) {
     std::vector<unsigned char> noiseTexture(width * height * 4);
 
@@ -249,12 +247,12 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
 
 
-    // Origin RGB Lights for shadow testing
+    // Basic white lights for testing normal map.
     SceneLights[0].color = glm::vec3(1.0, 1.0, 1.0);
     SceneLights[0].node->position = glm::vec3(12.0f, 0.0f, 0.0f); 
-    SceneLights[1].color = glm::vec3(0.0, 0.0, 1.0); 
-    SceneLights[1].node->position = glm::vec3(-12.0f, 0.0f, 0.0f); 
-    SceneLights[2].color = glm::vec3(0.0, 1.0, 0.0); 
+    SceneLights[1].color = glm::vec3(1.0, 1.0, 1.0); 
+    SceneLights[1].node->position = glm::vec3(-24.0f, 0.0f, 0.0f); 
+    SceneLights[2].color = glm::vec3(1.0, 1.0, 1.0); 
 
     boxNode->children.push_back(SceneLights[0].node);
     boxNode->children.push_back(SceneLights[1].node);
@@ -272,24 +270,14 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     ballNode->VAOIndexCount       = sphere.indices.size();
 
     // I added all this, Mesh stuff for text
-    Mesh textMesh = generateTextGeometryBuffer("Awesome Breakout Clone", 39.0/29, 300);
+    Mesh textMesh = generateTextGeometryBuffer("Awesome Breakout Clone", 39.0/29, 500);
     unsigned int textVAO = generateBuffer(textMesh);
     textNode = createSceneNode();
     textNode->nodeType = GEOMETRY_2D;
     textNode->vertexArrayObjectID = textVAO;
     textNode->VAOIndexCount = textMesh.indices.size();
-    // boxNode->children.push_back(textNode); // Hell
-    // textNode->position = glm::vec3(0.0f, 0.0f, 10.0f);
     rootNode->children.push_back(textNode);
-    //textNode->position = glm::vec3(0.0f, -5.0f, -90.0f);
-    //textNode->position = glm::vec3(0.0f, -0.25f, 0.999999999999999f);
-    //textNode->position = glm::vec3(20.0f, 200.0f, 0.0f);
-    textNode->position = glm::vec3(0, windowHeight - 20.0, 0.0f);
-
-
-    // rootNode->children.push_back(textNode); // Hell
-    // textNode->position = glm::vec3(0.0f, 0.0f, 0.0f);
-
+    textNode->position = glm::vec3(40, windowHeight - 40.0, 0.0f);
 
 
     ////////////
@@ -560,12 +548,6 @@ void uploadUniforms() {
     // NOTE to self: This looks correct but Im not exactly sure why the transformation matrix should be omitted?
     // Worth coming back to at some point to understand better.
     glUniform3fv(ballUniformLoc, 1, glm::value_ptr(ballNode->position));
-
-
-    // // asjkhasd
-    // GLint performPhongBoolUniformLocation = shader->getUniformFromName("performPhong");
-    // // There isn't  "bool" uniform, you use int with 0 or 1
-    // glUniform1i(performPhongBoolUniformLocation, false);
 }
 
 void renderNode(SceneNode* node) {
