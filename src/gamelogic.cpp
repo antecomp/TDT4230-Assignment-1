@@ -104,11 +104,6 @@ const glm::vec3 boxDimensions(180, 90, 90);
 
 CommandLineOptions options;
 
-bool hasStarted        = false;
-bool hasLost           = false;
-bool jumpedToNextFrame = false;
-bool isPaused          = false;
-
 bool mouseLeftPressed   = false;
 bool mouseLeftReleased  = false;
 bool mouseRightPressed  = false;
@@ -223,11 +218,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     ////////////
 
-    getTimeDeltaSeconds();
+    //getTimeDeltaSeconds();
 
     std::cout << fmt::format("Initialized scene with {} SceneNodes.", totalChildren(rootNode)) << std::endl;
-
-    std::cout << "Ready. Click to start!" << std::endl;
 }
 
 
@@ -240,9 +233,7 @@ void updateFrame(GLFWwindow* window) {
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    double timeDelta = getTimeDeltaSeconds();
-
-    const float cameraWallOffset = 30; // Arbitrary addition to prevent ball from going too much into camera
+    //double timeDelta = getTimeDeltaSeconds();
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)) {
         mouseLeftPressed = true;
@@ -259,73 +250,36 @@ void updateFrame(GLFWwindow* window) {
         mouseRightPressed = false;
     }
 
-    if(!hasStarted) {
-        if (mouseLeftPressed) {
-            totalElapsedTime = debug_startTime;
-            gameElapsedTime = debug_startTime;
-            hasStarted = true;
-        }
-    } else {
-        totalElapsedTime += timeDelta;
-        if(hasLost) {
-            if (mouseLeftReleased) {
-                hasLost = false;
-                hasStarted = false;
-                currentKeyFrame = 0;
-                previousKeyFrame = 0;
-            }
-        } else if (isPaused) {
-            if (mouseRightReleased) {
-                isPaused = false;
-            }
-        } else {
-            gameElapsedTime += timeDelta;
-            if (mouseRightReleased) {
-                isPaused = true;
-            }
-            // Get the timing for the beat of the song
-            for (unsigned int i = currentKeyFrame; i < keyFrameTimeStamps.size(); i++) {
-                if (gameElapsedTime < keyFrameTimeStamps.at(i)) {
-                    continue;
-                }
-                currentKeyFrame = i;
-            }
-
-            jumpedToNextFrame = currentKeyFrame != previousKeyFrame;
-            previousKeyFrame = currentKeyFrame;
-
-            double frameStart = keyFrameTimeStamps.at(currentKeyFrame);
-            double frameEnd = keyFrameTimeStamps.at(currentKeyFrame + 1); // Assumes last keyframe at infinity
-
-            double elapsedTimeInFrame = gameElapsedTime - frameStart;
-            double frameDuration = frameEnd - frameStart;
-            double fractionFrameComplete = elapsedTimeInFrame / frameDuration;
-        }
-    }
-
     // Camera/Transformation Log Starts Here.
+
+
+    float time = glfwGetTime(); // Alternatively....
+
+    float rotationAmount = sin(time) * 0.1f; // Small oscillation (verifying we have a proper frame update)
 
     projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
 
     //cameraPosition = glm::vec3(0, 2, -20);
     cameraPosition = glm::vec3(0, 10, 10);
 
-    cameraTransform = glm::lookAt(
-        cameraPosition, 
-        glm::vec3(0,5,0), 
-        glm::vec3(0,1,0)) * glm::translate(-cameraPosition
-    );
-
-    //glm::mat4 VP = projection * cameraTransform;
+    cameraTransform = 
+        glm::rotate(rotationAmount, glm::vec3(0, 1, 0)) * // Rotate around Y-axis
+        glm::lookAt(
+            cameraPosition, 
+            glm::vec3(0,5,0), 
+            glm::vec3(0,1,0)
+        ) 
+        * glm::translate(-cameraPosition);
 
     // Move and rotate various SceneNodes
     boxNode->position = { 0, -10, -80 };
 
-    //updateNodeTransformations(rootNode, VP);
+    // Traverse scene graph and reduce transformations together.
     updateNodeTransformations(rootNode, glm::identity<glm::mat4>());
 
 }
 
+// TODO: Move to separate file?
 void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar) {
     glm::mat4 transformationMatrix =
               glm::translate(node->position)
@@ -351,8 +305,7 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     }
 }
 
-// I think a lot of this could be moved to updateNodeTransformations or renderNode, but I think the separation of concerns is a bit more readable.
-// Plus, this information is constant between each node, only varies for a frame - so to recalculate it for each node isn't efficient.
+// TODO: Seperate File?
 void uploadUniforms() {
     LightSource lightData[NUM_LIGHT_SOURCES];
 
@@ -379,14 +332,9 @@ void uploadUniforms() {
     //GLint cameraUniformLocation = glGetUniformLocation(shader->get(), "u_cameraPosition"); // Old way I found online before learning about shaders helper func.
     GLint cameraUniformLocation = shader->getUniformFromName("u_cameraPosition");
     glUniform3fv(cameraUniformLocation, 1, glm::value_ptr(cameraPosition));
-
-    // Ball position for shadows.
-    // NOTE to self: This looks correct but Im not exactly sure why the transformation matrix should be omitted?
-    // Worth coming back to at some point to understand better.
 }
 
 void renderNode(SceneNode* node) {
-    //glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(node->currentTransformationMatrix));
     glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(projection * cameraTransform * node->currentTransformationMatrix)); // MVP
 
     // Need M and V and P *ALL* separate bcz we do our phong shading in worldspace.
@@ -395,8 +343,6 @@ void renderNode(SceneNode* node) {
     glUniformMatrix4fv(6, 1, GL_FALSE, glm::value_ptr(projection)); // P
 
     glm::mat3 InvTranspose = glm::mat3(glm::transpose(glm::inverse(node->currentTransformationMatrix)));
-
-    //std::cout << glm::to_string(InvTranspose) << std::endl; // Verify matrix is correct
 
     // Inverse of the transpose + only top 3x3 matrix (we dont translate our normals.)
     glUniformMatrix3fv(7, 1, GL_FALSE, glm::value_ptr(InvTranspose));
