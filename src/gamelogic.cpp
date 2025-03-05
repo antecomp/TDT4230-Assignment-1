@@ -330,14 +330,23 @@ void updateFrame(GLFWwindow* window) {
 
     projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
 
-    cameraPosition = glm::vec3(0, 2, -20);
+    //cameraPosition = glm::vec3(0, 2, -20);
+    cameraPosition = glm::vec3(0, 10, 10);
 
     // Some math to make the camera move in a nice way
-    float lookRotation = -0.6 / (1 + exp(-5 * (padPositionX-0.5))) + 0.3;
-    cameraTransform =
-                    glm::rotate(0.3f + 0.2f * float(-padPositionZ*padPositionZ), glm::vec3(1, 0, 0)) *
-                    glm::rotate(lookRotation, glm::vec3(0, 1, 0)) *
-                    glm::translate(-cameraPosition);
+    // float lookRotation = -0.6 / (1 + exp(-5 * (padPositionX-0.5))) + 0.3;
+    // cameraTransform =
+    //                 glm::rotate(0.3f + 0.2f * float(-padPositionZ*padPositionZ), glm::vec3(1, 0, 0)) *
+    //                 glm::rotate(lookRotation, glm::vec3(0, 1, 0)) *
+    //                 glm::translate(-cameraPosition);
+
+
+
+    cameraTransform = glm::lookAt(
+        cameraPosition, 
+        glm::vec3(0,5,0), 
+        glm::vec3(0,1,0)) * glm::translate(-cameraPosition
+    );
 
     //glm::mat4 VP = projection * cameraTransform;
 
