@@ -1,7 +1,6 @@
 #include <chrono>
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
-#include <SFML/Audio/SoundBuffer.hpp>
 #include <utilities/shader.hpp>
 #include <glm/vec3.hpp>
 #include <iostream>
@@ -9,7 +8,6 @@
 #include <utilities/mesh.h>
 #include <utilities/shapes.h>
 #include <utilities/glutils.h>
-#include <SFML/Audio/Sound.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fmt/format.h>
@@ -107,9 +105,7 @@ SceneNode* textNode;
 double ballRadius = 3.0f;
 
 // These are heap allocated, because they should not be initialised at the start of the program
-sf::SoundBuffer* buffer;
 Gloom::Shader* shader;
-sf::Sound* sound;
 
 const glm::vec3 boxDimensions(180, 90, 90);
 const glm::vec3 padDimensions(30, 3, 40);
@@ -173,10 +169,6 @@ struct LightSource {
 SceneLight SceneLights[NUM_LIGHT_SOURCES];
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
-    buffer = new sf::SoundBuffer();
-    if (!buffer->loadFromFile("../res/Hall of the Mountain King.ogg")) {
-        return;
-    }
 
     options = gameOptions;
 
@@ -330,13 +322,6 @@ void updateFrame(GLFWwindow* window) {
 
     if(!hasStarted) {
         if (mouseLeftPressed) {
-            if (options.enableMusic) {
-                sound = new sf::Sound();
-                sound->setBuffer(*buffer);
-                sf::Time startTime = sf::seconds(debug_startTime);
-                sound->setPlayingOffset(startTime);
-                sound->play();
-            }
             totalElapsedTime = debug_startTime;
             gameElapsedTime = debug_startTime;
             hasStarted = true;
@@ -357,17 +342,11 @@ void updateFrame(GLFWwindow* window) {
         } else if (isPaused) {
             if (mouseRightReleased) {
                 isPaused = false;
-                if (options.enableMusic) {
-                    sound->play();
-                }
             }
         } else {
             gameElapsedTime += timeDelta;
             if (mouseRightReleased) {
                 isPaused = true;
-                if (options.enableMusic) {
-                    sound->pause();
-                }
             }
             // Get the timing for the beat of the song
             for (unsigned int i = currentKeyFrame; i < keyFrameTimeStamps.size(); i++) {
@@ -444,10 +423,6 @@ void updateFrame(GLFWwindow* window) {
                     || ballPosition.z > padBackZ
                 ) {
                     hasLost = true;
-                    if (options.enableMusic) {
-                        sound->stop();
-                        delete sound;
-                    }
                 }
             }
         }
@@ -650,7 +625,4 @@ void renderFrame(GLFWwindow* window) {
     uploadUniforms();
 
     renderNode(rootNode);
-
-    //renderNode(textNode);
-
 }
