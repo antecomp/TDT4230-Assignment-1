@@ -88,16 +88,11 @@ enum KeyFrameAction {
 
 #include <timestamps.h>
 
-double padPositionX = 0;
-double padPositionZ = 0;
-
 unsigned int currentKeyFrame = 0;
 unsigned int previousKeyFrame = 0;
 
 SceneNode* rootNode;
 SceneNode* boxNode;
-SceneNode* padNode;
-
 
 SceneNode* textNode;
 
@@ -106,7 +101,6 @@ SceneNode* textNode;
 Gloom::Shader* shader;
 
 const glm::vec3 boxDimensions(180, 90, 90);
-const glm::vec3 padDimensions(30, 3, 40);
 
 CommandLineOptions options;
 
@@ -133,16 +127,8 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
     glViewport(0, 0, windowWidth, windowHeight);
 
-    double deltaX = x - lastMouseX;
-    double deltaY = y - lastMouseY;
-
-    padPositionX -= mouseSensitivity * deltaX / windowWidth;
-    padPositionZ -= mouseSensitivity * deltaY / windowHeight;
-
-    if (padPositionX > 1) padPositionX = 1;
-    if (padPositionX < 0) padPositionX = 0;
-    if (padPositionZ > 1) padPositionZ = 1;
-    if (padPositionZ < 0) padPositionZ = 0;
+    // double deltaX = x - lastMouseX;
+    // double deltaY = y - lastMouseY;
 
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);
 }
@@ -175,20 +161,16 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     shader->activate();
 
     // Create meshes
-    Mesh pad = cube(padDimensions, glm::vec2(30, 40), true);
     Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
 
     // Fill buffers
     unsigned int boxVAO  = generateBuffer(box);
-    unsigned int padVAO  = generateBuffer(pad);
 
     // Construct scene
     rootNode = createSceneNode();
     boxNode  = createSceneNode();
-    padNode  = createSceneNode();
 
     rootNode->children.push_back(boxNode);
-    rootNode->children.push_back(padNode);
 
 
     // Change box to be normal map type (I added this)
@@ -229,9 +211,6 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     boxNode->vertexArrayObjectID  = boxVAO;
     boxNode->VAOIndexCount        = box.indices.size();
 
-    padNode->vertexArrayObjectID  = padVAO;
-    padNode->VAOIndexCount        = pad.indices.size();
-
     // I added all this, Mesh stuff for text
     Mesh textMesh = generateTextGeometryBuffer("Awesome Breakout Clone", 39.0/29, 500);
     unsigned int textVAO = generateBuffer(textMesh);
@@ -241,7 +220,6 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     textNode->VAOIndexCount = textMesh.indices.size();
     rootNode->children.push_back(textNode);
     textNode->position = glm::vec3(40, windowHeight - 40.0, 0.0f);
-
 
     ////////////
 
@@ -259,7 +237,6 @@ glm::vec3 cameraPosition;
 glm::mat4 cameraTransform;
 
 void updateFrame(GLFWwindow* window) {
-
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -333,15 +310,6 @@ void updateFrame(GLFWwindow* window) {
     //cameraPosition = glm::vec3(0, 2, -20);
     cameraPosition = glm::vec3(0, 10, 10);
 
-    // Some math to make the camera move in a nice way
-    // float lookRotation = -0.6 / (1 + exp(-5 * (padPositionX-0.5))) + 0.3;
-    // cameraTransform =
-    //                 glm::rotate(0.3f + 0.2f * float(-padPositionZ*padPositionZ), glm::vec3(1, 0, 0)) *
-    //                 glm::rotate(lookRotation, glm::vec3(0, 1, 0)) *
-    //                 glm::translate(-cameraPosition);
-
-
-
     cameraTransform = glm::lookAt(
         cameraPosition, 
         glm::vec3(0,5,0), 
@@ -353,17 +321,8 @@ void updateFrame(GLFWwindow* window) {
     // Move and rotate various SceneNodes
     boxNode->position = { 0, -10, -80 };
 
-    padNode->position  = {
-        boxNode->position.x - (boxDimensions.x/2) + (padDimensions.x/2) + (1 - padPositionX) * (boxDimensions.x - padDimensions.x),
-        boxNode->position.y - (boxDimensions.y/2) + (padDimensions.y/2),
-        boxNode->position.z - (boxDimensions.z/2) + (padDimensions.z/2) + (1 - padPositionZ) * (boxDimensions.z - padDimensions.z)
-    };
-
     //updateNodeTransformations(rootNode, VP);
     updateNodeTransformations(rootNode, glm::identity<glm::mat4>());
-
-
-
 
 }
 
