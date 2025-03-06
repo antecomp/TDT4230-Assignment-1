@@ -1,4 +1,3 @@
-#include <chrono>
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
 #include <utilities/shader.hpp>
@@ -18,7 +17,7 @@
 #include "glm/matrix.hpp"
 #include "sceneGraph.hpp"
 #include "utilities/window.hpp"
-#define GLM_ENABLE_EXPERIMENTAL
+#define GLM_ENABLE_EXPERIMENTAL // Required by transform
 #include <glm/gtx/transform.hpp>
 
 #include "utilities/imageLoader.hpp"
@@ -32,21 +31,27 @@ enum KeyFrameAction {
     BOTTOM, TOP
 };
 
-#include <timestamps.h>
-
 unsigned int currentKeyFrame = 0;
 unsigned int previousKeyFrame = 0;
 
 SceneNode* rootNode;
 SceneNode* boxNode;
-
 SceneNode* textNode;
 
-// Declare these globally so I can reference them easily.
+// Global transforms for ez (lazy) reference.
 glm::mat4 projection;
 glm::vec3 cameraPosition;
 glm::mat4 cameraTransform;
 
+#define NUM_LIGHT_SOURCES 3
+// Node data for easy use with the existing scene graph layout
+struct SceneLight {
+    int id;
+    SceneNode* node;
+    glm::vec3 color;
+};
+
+SceneLight SceneLights[NUM_LIGHT_SOURCES];
 
 // These are heap allocated, because they should not be initialised at the start of the program
 Gloom::Shader* shader;
@@ -73,22 +78,6 @@ void mouseCallback(GLFWwindow* window, double x, double y) {
 
     glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);
 }
-
-#define NUM_LIGHT_SOURCES 3
-// Node data for easy use with the existing scene graph layout
-struct SceneLight {
-    int id;
-    SceneNode* node;
-    glm::vec3 color;
-};
-
-// Uniform Struct format, what gets sent to the frag shader. SceneLight transformed to this by uploadUniforms.
-struct LightSource {
-    glm::vec3 position;
-    glm::vec3 color;
-};
-
-SceneLight SceneLights[NUM_LIGHT_SOURCES];
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
@@ -245,8 +234,14 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
     }
 }
 
-// TODO: Seperate File?
 void uploadUniforms() {
+
+    // Uniform Struct format, what gets sent to the frag shader. SceneLight transformed to this by uploadUniforms.
+    struct LightSource {
+        glm::vec3 position;
+        glm::vec3 color;
+    };
+
     LightSource lightData[NUM_LIGHT_SOURCES];
 
     for(int i = 0; i < NUM_LIGHT_SOURCES; ++i) {
@@ -306,7 +301,7 @@ void renderNode(SceneNode* node) {
         case POINT_LIGHT: break;
         case SPOT_LIGHT: break;
         case GEOMETRY_2D: 
-            if(node->vertexArrayObjectID != -1) { // Note to self: I should probably extract a lot of this behavior elsewhere!
+            if(node->vertexArrayObjectID != -1) {
                 
                 // Positioning/Shading Stuf...
                 glm::mat4 orthoProjection = glm::ortho(
@@ -323,7 +318,6 @@ void renderNode(SceneNode* node) {
                 glBindTexture(GL_TEXTURE_2D, textTextureID); // idk why I had this, works without. Keeping comment just in case.
                 glBindTextureUnit(0, textTextureID);
 
-
                 // (DEBUG/TEST) THIS SHOWS NOISE AS EXPECTED
                 // std::vector<unsigned char> noiseData = generateNoiseTextureRGBA(128, 128);
                 // GLuint noiseTextureID;
@@ -334,8 +328,6 @@ void renderNode(SceneNode* node) {
                 // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 // glBindTexture(GL_TEXTURE_2D, noiseTextureID);
                 // glBindTextureUnit(0, noiseTextureID);
-
-
 
                 glBindVertexArray(node->vertexArrayObjectID); // totally didnt forget to put this and struggle to debug for hours :^)
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
