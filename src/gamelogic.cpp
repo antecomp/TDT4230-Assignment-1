@@ -24,63 +24,9 @@
 #include "utilities/imageLoader.hpp"
 #include "utilities/glfont.h"
 
-#include <vector>
-#include <cstdlib> // For rand()
-#include <ctime>   // For seeding rand()
-
-// Made this as a test texture to make sure my mapping wasn't stretched or weird.
-std::vector<unsigned char> generateNoiseTextureRGBA(int width, int height) {
-    std::vector<unsigned char> noiseTexture(width * height * 4);
-
-    std::srand(std::time(nullptr));  // Seed random generator
-
-    for (int i = 0; i < width * height * 4; i += 4) {
-        noiseTexture[i + 0] = std::rand() % 256; // R
-        noiseTexture[i + 1] = std::rand() % 256; // G
-        noiseTexture[i + 2] = std::rand() % 256; // B
-        noiseTexture[i + 3] = 255;               // A (fully opaque)
-    }
-
-    return noiseTexture;
-}
-
-
+#include "utilities/textureUtils.h"
 
 PNGImage fontImage = loadPNGFile("../res/textures/charmap.png");
-
-// Todo: move this elsewhere?
-GLuint createTexture(const PNGImage& image) {
-    //GLuint textureID;
-    unsigned int textureID;
-
-    // Similar syntax and idea to making our VBOs and such...
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    // Copy raw image data to GPU (I think thats what this does)
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, GL_RGBA, 
-        image.width, image.height, 0,
-        GL_RGBA, GL_UNSIGNED_BYTE, image.pixels.data()
-    );
-
-    // Automatically generate a MipMap for our texture (wow!)
-    // Acting on bound texture, so no extra param needed...
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    // Configure sampling for the texture...
-    // glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Texels smaller... (This is just pure interpolation - no mipmap)
-    // glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // MipMap settings : X_MIPMAP_Y   X -> interpolation between mipmaps,  Y -> interpolation for sampling the mipmap itself.
-    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST); // Apply mipmap as texel smaller sampling thingy like this :D
-
-    glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Interpolate when texel larger than pixels.
-
-
-
-    return textureID;
-};
 
 enum KeyFrameAction {
     BOTTOM, TOP
@@ -96,6 +42,11 @@ SceneNode* boxNode;
 
 SceneNode* textNode;
 
+// Declare these globally so I can reference them easily.
+glm::mat4 projection;
+glm::vec3 cameraPosition;
+glm::mat4 cameraTransform;
+
 
 // These are heap allocated, because they should not be initialised at the start of the program
 Gloom::Shader* shader;
@@ -108,11 +59,6 @@ bool mouseLeftPressed   = false;
 bool mouseLeftReleased  = false;
 bool mouseRightPressed  = false;
 bool mouseRightReleased = false;
-
-// Modify if you want the music to start further on in the track. Measured in seconds.
-const float debug_startTime = 0;
-double totalElapsedTime = debug_startTime;
-double gameElapsedTime = debug_startTime;
 
 double mouseSensitivity = 1.0;
 double lastMouseX = windowWidth / 2;
@@ -207,7 +153,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     boxNode->VAOIndexCount        = box.indices.size();
 
     // I added all this, Mesh stuff for text
-    Mesh textMesh = generateTextGeometryBuffer("Awesome Breakout Clone", 39.0/29, 500);
+    Mesh textMesh = generateTextGeometryBuffer("TDT4230 Final Project", 39.0/29, 500);
     unsigned int textVAO = generateBuffer(textMesh);
     textNode = createSceneNode();
     textNode->nodeType = GEOMETRY_2D;
@@ -222,12 +168,6 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     std::cout << fmt::format("Initialized scene with {} SceneNodes.", totalChildren(rootNode)) << std::endl;
 }
-
-
-// Declare these globally so I can reference them easily.
-glm::mat4 projection;
-glm::vec3 cameraPosition;
-glm::mat4 cameraTransform;
 
 void updateFrame(GLFWwindow* window) {
 
