@@ -25,14 +25,6 @@ uniform vec3 u_cameraPosition;
 
 in vec3 fragWSPosition; 
 
-uniform vec3 u_ballPosition;
-float ballRadius = 3.0;
-vec3 reject(vec3 from, vec3 onto) {
-    return from - onto*dot(from, onto)/dot(onto, onto);
-}
-
-vec3 toBall = u_ballPosition - fragWSPosition;
-
 float la = 0.003;
 float lb = 0.001;
 float lc = 0.002;
@@ -113,23 +105,6 @@ void main()
         vec3 lightDir = normalize(lightDistance);
         float d = length(lightDistance);
         float L = 1.0 / (la + d * lb + d * d * lc);
-
-        // For smooth shadows we should instead scale some factor
-        // We can just scale L directly to make our lives easier...
-        float innerRadius = ballRadius;         // Hard shadow cutoff
-        float outerRadius = ballRadius * 1.5;   // Start of soft shadow transition
-        vec3 toLight = lightSources[i].position - fragWSPosition;
-        float rejectLength = length(reject(toBall, toLight));
-
-        if (
-            length(toBall) < length(toLight) // Ball is between light and fragment
-            && rejectLength < outerRadius // Fragment is within extended occlusion width
-            && dot(toBall, toLight) > 0.0 // Ball is "blocking" light (not behind it)
-        ) {
-            // Thanks google: https://registry.khronos.org/OpenGL-Refpages/gl4/html/smoothstep.xhtml
-            float shadowFactor = smoothstep(innerRadius, outerRadius, rejectLength);
-            L *= shadowFactor;
-        }
 
         // Diffuse
         vec3 diffuseColour = lightSources[i].color;
