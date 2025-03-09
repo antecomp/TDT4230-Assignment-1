@@ -41,6 +41,13 @@ SceneNode* textNode;
 // Global transforms for ez (lazy) reference.
 glm::mat4 projection;
 glm::vec3 cameraPosition;
+
+
+// Camera Stuff
+SceneNode* bodyNode; // Holds "yaw"
+SceneNode* headNode; // Holds "pitch"
+float cameraYaw = 0.0f;
+float cameraPitch = 0.0f;
 glm::mat4 cameraTransform;
 
 #define NUM_LIGHT_SOURCES 3
@@ -66,17 +73,38 @@ bool mouseRightPressed  = false;
 bool mouseRightReleased = false;
 
 double mouseSensitivity = 1.0;
-double lastMouseX = windowWidth / 2;
-double lastMouseY = windowHeight / 2;
 void mouseCallback(GLFWwindow* window, double x, double y) {
-    int windowWidth, windowHeight;
-    glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    glViewport(0, 0, windowWidth, windowHeight);
+    static bool firstMouse = true;
+    static double lastX = windowWidth / 2;
+    static double lastY = windowHeight / 2;
 
-    // double deltaX = x - lastMouseX;
-    // double deltaY = y - lastMouseY;
+    if (firstMouse) {
+        lastX = x;
+        lastY = y;
+        firstMouse = false;
+    }
 
-    glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);
+    float deltaX = float(x - lastX) * mouseSensitivity;
+    float deltaY = float(y - lastY) * mouseSensitivity;
+
+    lastX = x;
+    lastY = y;
+
+    // Adjust yaw (body) and pitch (head)
+    cameraYaw -= deltaX * 0.002f; // Inverted X (right is positive)
+    cameraPitch -= deltaY * 0.002f; // Inverted Y (up is negative)
+
+    // Clamp pitch to avoid flipping
+    cameraPitch = glm::clamp(cameraPitch, -glm::radians(89.0f), glm::radians(89.0f));
+}
+
+void updateCamera() {
+    bodyNode->rotation.y = cameraYaw;
+    headNode->rotation.x = cameraPitch;
+
+    cameraPosition = bodyNode->position;
+    // View matrix = inverse of cameras world transform.
+    cameraTransform = glm::inverse(headNode->currentTransformationMatrix);
 }
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
@@ -155,6 +183,20 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     //getTimeDeltaSeconds();
 
+    // Camera stuff
+    bodyNode = createSceneNode();
+    headNode = createSceneNode();
+    bodyNode->nodeType = FIRST_PERSON_CAMERA;
+    headNode->nodeType = FIRST_PERSON_CAMERA;
+
+    bodyNode->children.push_back(headNode);
+    bodyNode->position = glm::vec3(0, 10, -50); // SYNONYMOUS WITH INITIAL CAMERA POSITION!!! 
+    headNode->position = glm::vec3(0, 0, 0);
+
+    rootNode->children.push_back(bodyNode);
+
+
+
     std::cout << fmt::format("Initialized scene with {} SceneNodes.", totalChildren(rootNode)) << std::endl;
 }
 
@@ -189,16 +231,18 @@ void updateFrame(GLFWwindow* window) {
     projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
 
     //cameraPosition = glm::vec3(0, 2, -20);
-    cameraPosition = glm::vec3(0, 10, 10);
+    // cameraPosition = glm::vec3(0, 10, 10);
 
-    cameraTransform = 
-        glm::rotate(rotationAmount, glm::vec3(0, 1, 0)) * // Rotate around Y-axis
-        glm::lookAt(
-            cameraPosition, 
-            glm::vec3(0,5,0), 
-            glm::vec3(0,1,0)
-        ) 
-        * glm::translate(-cameraPosition);
+    // cameraTransform = 
+    //     glm::rotate(rotationAmount, glm::vec3(0, 1, 0)) * // Rotate around Y-axis
+    //     glm::lookAt(
+    //         cameraPosition, 
+    //         glm::vec3(0,5,0), 
+    //         glm::vec3(0,1,0)
+    //     ) 
+    //     * glm::translate(-cameraPosition);
+
+    updateCamera();
 
     // Move and rotate various SceneNodes
     boxNode->position = { 0, -10, -80 };
@@ -348,7 +392,9 @@ void renderNode(SceneNode* node) {
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
         break;
-    }
+        case FIRST_PERSON_CAMERA:
+          break;
+        }
 
     for(SceneNode* child : node->children) {
         renderNode(child);

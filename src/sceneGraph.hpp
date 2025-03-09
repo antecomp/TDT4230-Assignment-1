@@ -15,7 +15,8 @@
 
 enum SceneNodeType {
 	GEOMETRY, POINT_LIGHT, SPOT_LIGHT, 
-	GEOMETRY_2D, NORMAL_MAPPED_GEOMETRY // I added these.
+	GEOMETRY_2D, NORMAL_MAPPED_GEOMETRY, // I added these.
+	FIRST_PERSON_CAMERA // "null" nodes for placing the camera axes
 };
 
 struct SceneNode {
