@@ -1,4 +1,5 @@
 #include <GLFW/glfw3.h>
+#include <cstdlib>
 #include <glad/glad.h>
 #include <utilities/shader.hpp>
 #include <glm/vec3.hpp>
@@ -107,12 +108,59 @@ void updateCamera() {
     cameraTransform = glm::inverse(headNode->currentTransformationMatrix);
 }
 
+
+// Keyboard Movement
+bool keyW = false, keyA = false, keyS = false, keyD = false;
+bool keySpace = false, keyCtrl = false;
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action == GLFW_PRESS || action == GLFW_RELEASE) {
+        bool isPressed = (action == GLFW_PRESS);
+
+        switch (key) {
+            case GLFW_KEY_W: keyW = isPressed; break;
+            case GLFW_KEY_A: keyA = isPressed; break;
+            case GLFW_KEY_S: keyS = isPressed; break;
+            case GLFW_KEY_D: keyD = isPressed; break;
+            case GLFW_KEY_SPACE: keySpace = isPressed; break;
+            case GLFW_KEY_LEFT_CONTROL: keyCtrl = isPressed; break;
+        }
+    }
+}
+
+void updateMovement(float deltaTime) {
+    float moveSpeed = 20.0f * deltaTime;
+
+    glm::vec3 moveDirection = glm::vec3(0.0f);
+
+    glm::mat4 yawRotation = glm::rotate(glm::mat4(1.0f), cameraYaw, glm::vec3(0, 1, 0));
+    glm::vec3 forward = glm::vec3(yawRotation * glm::vec4(0, 0, -1, 0)); // -Z spun by yaw
+    glm::vec3 right   = glm::vec3(yawRotation * glm::vec4(1, 0, 0, 0));  // +X spun by yaw.
+
+
+    if (keyW) moveDirection += forward;
+    if (keyS) moveDirection -= forward;
+    if (keyA) moveDirection -= right;
+    if (keyD) moveDirection += right;
+
+    // Up/Down is just relative to world space instead.
+    if (keySpace) moveDirection += glm::vec3(0, 1, 0);
+    if (keyCtrl) moveDirection -= glm::vec3(0, 1, 0);
+
+    // Apply movement
+    if (glm::length(moveDirection) > 0) {
+        bodyNode->position += glm::normalize(moveDirection) * moveSpeed;
+    }
+}
+
+
+
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     options = gameOptions;
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
     glfwSetCursorPosCallback(window, mouseCallback);
+    glfwSetKeyCallback(window, keyCallback);
 
     shader = new Gloom::Shader();
     shader->makeBasicShader("../res/shaders/simple.vert", "../res/shaders/simple.frag");
@@ -204,7 +252,7 @@ void updateFrame(GLFWwindow* window) {
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    //double timeDelta = getTimeDeltaSeconds();
+    double timeDelta = getTimeDeltaSeconds();
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)) {
         mouseLeftPressed = true;
@@ -221,27 +269,9 @@ void updateFrame(GLFWwindow* window) {
         mouseRightPressed = false;
     }
 
-    // Camera/Transformation Log Starts Here.
-
-
-    float time = glfwGetTime(); // Alternatively....
-
-    float rotationAmount = sin(time) * 0.1f; // Small oscillation (verifying we have a proper frame update)
-
+    // Camera/Transformation
     projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
-
-    //cameraPosition = glm::vec3(0, 2, -20);
-    // cameraPosition = glm::vec3(0, 10, 10);
-
-    // cameraTransform = 
-    //     glm::rotate(rotationAmount, glm::vec3(0, 1, 0)) * // Rotate around Y-axis
-    //     glm::lookAt(
-    //         cameraPosition, 
-    //         glm::vec3(0,5,0), 
-    //         glm::vec3(0,1,0)
-    //     ) 
-    //     * glm::translate(-cameraPosition);
-
+    updateMovement(timeDelta);
     updateCamera();
 
     // Move and rotate various SceneNodes
