@@ -80,16 +80,18 @@ void main()
             normalMapped = normalMapped * 2.0 - 1.0;
 
             // (test) All work
-            // color = vec4(normalMapColor, 1.0);
-            // color = vec4(diffuseColor, 1.0);
+            //color = vec4(normalMapColor, 1.0);
+            //color = vec4(diffuseColor, 1.0);
             //color = vec4(normalMapped, 1.0);
             // color = vec4(TBN * normalMapped, 1.0);
-            // return;
 
             //normalToUse = normalMapped;
             normalToUse = TBN * normalMapped;
             baseDiffuseToUse = diffuseColor;
         }
+
+            // color = vec4(textureCoordinates, 0.0, 1.0);
+            // return;
 
 
 

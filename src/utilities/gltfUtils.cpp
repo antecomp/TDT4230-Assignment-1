@@ -50,6 +50,25 @@ Mesh convertTinyGLTFMesh(const tinygltf::Model &model, const tinygltf::Mesh &glt
                 mesh.indices.push_back(indices[i]);
             }
         }
+
+
+        // Texture Coordinates
+        if (primitive.attributes.find("TEXCOORD_0") != primitive.attributes.end()) {
+            const tinygltf::Accessor &uvAccessor = model.accessors[primitive.attributes.at("TEXCOORD_0")];
+            const tinygltf::BufferView &uvBufferView = model.bufferViews[uvAccessor.bufferView];
+            const tinygltf::Buffer &uvBuffer = model.buffers[uvBufferView.buffer];
+        
+            const float *uvs = reinterpret_cast<const float *>(
+                &uvBuffer.data[uvBufferView.byteOffset + uvAccessor.byteOffset]);
+        
+            for (size_t i = 0; i < uvAccessor.count; i++) {
+                mesh.textureCoordinates.push_back(glm::vec2(uvs[i * 2 + 0], uvs[i * 2 + 1]));
+            }
+        
+            //std::cout << "✅ Loaded " << uvAccessor.count << " texture coordinates." << std::endl;
+        } else {
+            std::cerr << "⚠ WARNING: No UV maps (TEXCOORD_0) found in GLB file." << std::endl;
+        }
     }
 
 
