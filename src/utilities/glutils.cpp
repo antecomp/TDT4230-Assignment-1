@@ -2,6 +2,7 @@
 #include <program.hpp>
 #include "glutils.h"
 #include <vector>
+#include "iostream"
 
 template <class T>
 unsigned int generateAttribute(int id, int elementsPerEntry, std::vector<T> data, bool normalize) {
@@ -60,33 +61,57 @@ void getTangentBasisForMesh(
 }
 
 unsigned int generateBuffer(Mesh &mesh) {
+    std::cout << "Generating buffer for mesh with " << mesh.vertices.size() 
+              << " vertices and " << mesh.indices.size() << " indices." << std::endl;
+
+    if (mesh.vertices.empty()) {
+        std::cerr << "Error: Mesh has no vertices!" << std::endl;
+        return 0;
+    }
+    if (mesh.indices.empty()) {
+        std::cerr << "Error: Mesh has no indices!" << std::endl;
+        return 0;
+    }
+
     unsigned int vaoID;
     glGenVertexArrays(1, &vaoID);
+    std::cout << "Generated VAO: " << vaoID << std::endl;
     glBindVertexArray(vaoID);
-
+    
+    std::cout << "Generating vertex attribute 0..." << std::endl;
     generateAttribute(0, 3, mesh.vertices, false);
-    if (mesh.normals.size() > 0) {
+    
+    if (!mesh.normals.empty()) {
+        std::cout << "Generating vertex attribute 1 (normals)..." << std::endl;
         generateAttribute(1, 3, mesh.normals, true);
     }
-    if (mesh.textureCoordinates.size() > 0) {
+
+    if (!mesh.textureCoordinates.empty()) {
+        std::cout << "Generating vertex attribute 2 (texture coords)..." << std::endl;
         generateAttribute(2, 2, mesh.textureCoordinates, false);
     }
 
-    // Tangent/Bitangent Stuff For Normal Mapping (TBN)...
-
+    // Tangent/Bitangent (TBN) calculation
+    std::cout << "Calculating TBN basis..." << std::endl;
     std::vector<glm::vec3> tangents(mesh.vertices.size(), glm::vec3(0.0f));
     std::vector<glm::vec3> bitangents(mesh.vertices.size(), glm::vec3(0.0f));
 
-    getTangentBasisForMesh(mesh, tangents, bitangents);
-
-    // Upload Them To Shader!!!!!!
+    // CURRENTLY BROKEN WITH LOADER (SEGFAULT) FIX ME!!!
+    //getTangentBasisForMesh(mesh, tangents, bitangents);
+    
+    std::cout << "Generating vertex attribute 3 (tangents)..." << std::endl;
     generateAttribute(3, 3, tangents, false);
+    
+    std::cout << "Generating vertex attribute 4 (bitangents)..." << std::endl;
     generateAttribute(4, 3, bitangents, false);
 
     unsigned int indexBufferID;
     glGenBuffers(1, &indexBufferID);
+    std::cout << "Generated Index Buffer: " << indexBufferID << std::endl;
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), mesh.indices.data(), GL_STATIC_DRAW);
+    
+    std::cout << "Finished buffer generation!" << std::endl;
 
     return vaoID;
 }

@@ -25,22 +25,19 @@
 #include "utilities/glfont.h"
 
 #include "utilities/textureUtils.h"
+#include "utilities/gltfUtils.hpp"
 
+// #define TINYGLTF_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION   // Needed for image loading
+// #define STB_IMAGE_WRITE_IMPLEMENTATION // Needed for saving textures
 
-#define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION   // Needed for image loading
-#define STB_IMAGE_WRITE_IMPLEMENTATION // Needed for saving textures
+// #include "tiny_gltf.h"
 
-#include "tiny_gltf.h"
+// tinygltf::Model model;
+// tinygltf::TinyGLTF loader;
+// std::string err, warn;
 
-tinygltf::Model model;
-tinygltf::TinyGLTF loader;
-std::string err, warn;
-
-bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, "../res/gtlf/teapot.glb");
-// or for binary
-// bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, "path/to/model.glb");
-
+// bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, "../res/gtlf/teapot.glb");
 
 
 
@@ -181,19 +178,6 @@ void updateMovement(float deltaTime) {
 
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
-
-    if (!warn.empty()) {
-        std::cerr << "TinyGLTF Warning: " << warn << std::endl;
-    }
-    
-    if (!err.empty()) {
-        std::cerr << "TinyGLTF Error: " << err << std::endl;
-    }
-    
-    if (!ret) {
-        std::cerr << "Failed to load GLTF file!" << std::endl;
-    }
-
     options = gameOptions;
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
@@ -280,6 +264,21 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     headNode->position = glm::vec3(0, 0, 0);
 
     rootNode->children.push_back(bodyNode);
+
+
+
+
+    // GLTF TEST
+    SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/teapot.glb");
+
+    std::cout << "Teapot scene node created: " << teapot << std::endl;
+
+    if (!teapot) {
+        std::cerr << "Error: Failed to load GLB model" << std::endl;
+        exit(1);
+    }
+
+    rootNode->children.push_back(teapot);
 
 
 
