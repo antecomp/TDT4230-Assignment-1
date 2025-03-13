@@ -26,6 +26,32 @@
 
 #include "utilities/textureUtils.h"
 
+
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION   // Needed for image loading
+#define STB_IMAGE_WRITE_IMPLEMENTATION // Needed for saving textures
+
+#include "tiny_gltf.h"
+
+tinygltf::Model model;
+tinygltf::TinyGLTF loader;
+std::string err, warn;
+
+bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, "../res/gtlf/teapot.glb");
+// or for binary
+// bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, "path/to/model.glb");
+
+
+
+
+
+
+
+
+
+
+
+
 PNGImage fontImage = loadPNGFile("../res/textures/charmap.png");
 
 enum KeyFrameAction {
@@ -155,6 +181,18 @@ void updateMovement(float deltaTime) {
 
 
 void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
+
+    if (!warn.empty()) {
+        std::cerr << "TinyGLTF Warning: " << warn << std::endl;
+    }
+    
+    if (!err.empty()) {
+        std::cerr << "TinyGLTF Error: " << err << std::endl;
+    }
+    
+    if (!ret) {
+        std::cerr << "Failed to load GLTF file!" << std::endl;
+    }
 
     options = gameOptions;
 
