@@ -269,7 +269,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
 
     // GLTF TEST
-    SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/teapot.glb");
+    SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/teapot_smooth.glb");
 
     if (!teapot) {
         std::cerr << "Error: Failed to load GLB model" << std::endl;
