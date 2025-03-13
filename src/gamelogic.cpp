@@ -271,14 +271,12 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     // GLTF TEST
     SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/teapot.glb");
 
-    std::cout << "Teapot scene node created: " << teapot << std::endl;
-
     if (!teapot) {
         std::cerr << "Error: Failed to load GLB model" << std::endl;
         exit(1);
     }
 
-    rootNode->children.push_back(teapot);
+    boxNode->children.push_back(teapot);
 
 
 
