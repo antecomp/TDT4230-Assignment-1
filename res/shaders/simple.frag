@@ -94,7 +94,11 @@ void main()
             // return;
 
     // No normal map, just texture...
+    // Sample the texture, but if it's black (no texture), use a default color
     vec3 diffuseColor = texture(diffuseSampler, textureCoordinates).rgb;
+    if (diffuseColor == vec3(0.0, 0.0, 0.0)) { 
+        diffuseColor = vec3(1.0, 0.8, 0.5); // Fallback placeholder color (warm orange)
+    }
     baseDiffuseToUse = diffuseColor;
 
 

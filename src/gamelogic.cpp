@@ -269,14 +269,17 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
 
     // GLTF TEST
-    SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/saturn.glb");
+    SceneNode* testModel = loadGLBToSceneGraph("../res/gtlf/well_baked.glb");
 
-    if (!teapot) {
+    if (!testModel) {
         std::cerr << "Error: Failed to load GLB model" << std::endl;
         exit(1);
     }
 
-    boxNode->children.push_back(teapot);
+    boxNode->children.push_back(testModel);
+
+    testModel->position = glm::vec3(-10.0, -10.0, -10.0);
+    testModel->scale = glm::vec3(5.0, 5.0, 5.0);
 
 
 
