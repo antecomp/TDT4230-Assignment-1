@@ -93,7 +93,9 @@ void main()
             // color = vec4(textureCoordinates, 0.0, 1.0);
             // return;
 
-
+    // No normal map, just texture...
+    vec3 diffuseColor = texture(diffuseSampler, textureCoordinates).rgb;
+    baseDiffuseToUse = diffuseColor;
 
 
 

@@ -269,7 +269,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
 
     // GLTF TEST
-    SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/idk.glb");
+    SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/saturn.glb");
 
     if (!teapot) {
         std::cerr << "Error: Failed to load GLB model" << std::endl;
@@ -404,6 +404,10 @@ void renderNode(SceneNode* node) {
         case GEOMETRY:
             if(node->vertexArrayObjectID != -1) {
                 glBindVertexArray(node->vertexArrayObjectID);
+
+                glBindTexture(GL_TEXTURE_2D, node->textureID);
+                glBindTextureUnit(1, node->textureID);
+
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
             }
             break;

@@ -1,3 +1,4 @@
+#include "glad/glad.h"
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION   // Needed for image loading
 #define STB_IMAGE_WRITE_IMPLEMENTATION // Needed for saving textures
@@ -5,6 +6,46 @@
 #include "gltfUtils.hpp"
 #include "glutils.h"
 #include <iostream>
+
+// Extremely similar to how createTexture works, just with tinygltfs image format....
+unsigned int createGLTexture(const tinygltf::Image &image) {
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    // Determine Format From Data
+    GLenum format;
+    switch(image.component) {
+        case 1: format = GL_RED; break;
+        case 2: format = GL_RG; break;
+        case 3: format = GL_RGB; break;
+        case 4: format = GL_RGBA; break;
+        default:
+            std::cerr << "Unsupported number of components: " << image.component << std::endl;
+            return 0;
+    }
+
+    // Upload to GPU...
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, format,
+        image.width, image.height, 0,
+        format, GL_UNSIGNED_BYTE, image.image.data()
+    );
+
+    // Mipmaps...
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    // Unbind the texture
+    //glBindTexture(GL_TEXTURE_2D, 0);
+
+    return textureID;
+}
+
+
+
 
 Mesh convertTinyGLTFMesh(const tinygltf::Model &model, const tinygltf::Mesh &gltfMesh) {
     Mesh mesh;
@@ -129,9 +170,68 @@ SceneNode* convertTinyGLTFNode(const tinygltf::Model &model, int nodeIndex) {
         node->vertexArrayObjectID = generateBuffer(mesh);
         node->VAOIndexCount = mesh.indices.size();
         //std::cout << "VAO generated: " << node->vertexArrayObjectID << ", Index count: " << node->VAOIndexCount << std::endl;
+
+        // tinygltfs own mesh thing holds metadata we need for textures
+        const tinygltf::Mesh &gltfMesh = model.meshes[gltfNode.mesh];
+
+        // Texture code goes here.
+        int textureID = 0; // Default: No texture applied
+
+        if (!gltfMesh.primitives.empty()) {
+            const tinygltf::Primitive &primitive = gltfMesh.primitives[0];
+
+            //std::cout << "🔹 Checking material for texture..." << std::endl;
+
+            if (primitive.material >= 0 && primitive.material < model.materials.size()) {
+                const tinygltf::Material &material = model.materials[primitive.material];
+
+                std::cout << "🔹 Found material for primitive." << std::endl;
+
+                if (material.pbrMetallicRoughness.baseColorTexture.index >= 0) {
+                    int textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
+                    //std::cout << "🔹 Material has base color texture index: " << textureIndex << std::endl;
+
+                    if (textureIndex < model.textures.size()) {
+                        const tinygltf::Texture &texture = model.textures[textureIndex];
+                        //std::cout << "🔹 Found texture in GLTF model at index " << textureIndex << std::endl;
+
+                        if (texture.source >= 0 && texture.source < model.images.size()) {
+                            const tinygltf::Image &image = model.images[texture.source];
+
+                            std::cout << "✅ Creating GL texture for image with size: " 
+                                      << image.width << "x" << image.height << std::endl;
+
+                            // Upload texture to OpenGL
+                            textureID = createGLTexture(image);
+                            //std::cout << "✅ Loaded texture ID: " << textureID << " for node " << nodeIndex << std::endl;
+                        } else {
+                            std::cerr << "❌ ERROR: Texture source index out of bounds! texture.source = " 
+                                      << texture.source << ", images.size() = " << model.images.size() << std::endl;
+                        }
+                    } else {
+                        std::cerr << "❌ ERROR: Texture index out of bounds! textureIndex = " 
+                                  << textureIndex << ", textures.size() = " << model.textures.size() << std::endl;
+                    }
+                } else {
+                    std::cerr << "⚠ WARNING: No baseColorTexture in material." << std::endl;
+                }
+            } else {
+                std::cerr << "⚠ WARNING: Primitive has no material assigned." << std::endl;
+            }
+        } else {
+            std::cerr << "⚠ WARNING: No primitives found in mesh." << std::endl;
+        }
+
+        // Assign texture ID to the scene node
+        node->textureID = textureID;
+        
+
+
+
     } else {
         std::cout << "Node " << nodeIndex << " has no mesh." << std::endl;
     }
+
 
     // Attach child nodes
     //std::cout << "Node " << nodeIndex << " has " << gltfNode.children.size() << " children." << std::endl;
@@ -146,6 +246,66 @@ SceneNode* convertTinyGLTFNode(const tinygltf::Model &model, int nodeIndex) {
     }
 
     //std::cout << "Finished processing node " << nodeIndex << std::endl;
+
+
+
+    // Texture test - This prints as expected.
+    // for (size_t i = 0; i < model.textures.size(); ++i) {
+    //     const tinygltf::Texture &texture = model.textures[i];
+    //     std::cout << "Texture " << i << ":" << std::endl;
+    
+    //     // Get the image index
+    //     int imageIndex = texture.source;
+    //     if (imageIndex >= 0 && imageIndex < model.images.size()) {
+    //         const tinygltf::Image &image = model.images[imageIndex];
+    //         std::cout << "  Image URI: " << image.uri << std::endl;
+    //         std::cout << "  Image size: " << image.width << "x" << image.height << std::endl;
+    //         std::cout << "  Image component: " << image.component << std::endl;
+    //         std::cout << "  Image bits: " << image.bits << std::endl;
+    //     }
+    
+    //     // Get the sampler index
+    //     int samplerIndex = texture.sampler;
+    //     if (samplerIndex >= 0 && samplerIndex < model.samplers.size()) {
+    //         const tinygltf::Sampler &sampler = model.samplers[samplerIndex];
+    //         std::cout << "  Sampler minFilter: " << sampler.minFilter << std::endl;
+    //         std::cout << "  Sampler magFilter: " << sampler.magFilter << std::endl;
+    //         std::cout << "  Sampler wrapS: " << sampler.wrapS << std::endl;
+    //         std::cout << "  Sampler wrapT: " << sampler.wrapT << std::endl;
+    //     }
+    // }
+
+    // for (size_t i = 0; i < model.textures.size(); ++i) {
+    //     const tinygltf::Texture &texture = model.textures[i];
+    //     std::cout << "Texture " << i << ":" << std::endl;
+    //     std::cout << "  Source: " << texture.source << std::endl;
+    //     std::cout << "  Sampler: " << texture.sampler << std::endl;
+    // }
+    
+    // for (size_t i = 0; i < model.images.size(); ++i) {
+    //     const tinygltf::Image &image = model.images[i];
+    //     std::cout << "Image " << i << ":" << std::endl;
+    //     std::cout << "  URI: " << image.uri << std::endl;
+    //     std::cout << "  Size: " << image.width << "x" << image.height << std::endl;
+    //     std::cout << "  Components: " << image.component << std::endl;
+    // }
+    
+    // for (size_t i = 0; i < model.materials.size(); ++i) {
+    //     const tinygltf::Material &material = model.materials[i];
+    //     std::cout << "Material " << i << ":" << std::endl;
+    //     if (material.values.find("baseColorTexture") != material.values.end()) {
+    //         std::cout << "  Base Color Texture Index: " << material.values.at("baseColorTexture").TextureIndex() << std::endl;
+    //     }
+    //     if (material.normalTexture.index >= 0) {
+    //         std::cout << "  Normal Texture Index: " << material.normalTexture.index << std::endl;
+    //     }
+    // }
+
+
+
+
+
+
 
     return node;
 }
