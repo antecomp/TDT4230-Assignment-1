@@ -281,6 +281,12 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     testModel->position = glm::vec3(-10.0, -10.0, -10.0);
     testModel->scale = glm::vec3(5.0, 5.0, 5.0);
 
+    SceneNode* chair = loadGLBToSceneGraph("../res/gtlf/chair.glb");
+    boxNode->children.push_back(chair);
+    chair->position = glm::vec3(10.0, -10.0, -10.0);
+    chair->scale = glm::vec3(2.0, 2.0, 2.0);
+    chair->rotation = glm::vec3(0.0, 3.1, 0.0);
+
 
 
     std::cout << fmt::format("Initialized scene with {} SceneNodes.", totalChildren(rootNode)) << std::endl;
