@@ -5,7 +5,10 @@ out vec4 FragColor;
 
 uniform sampler2D sceneTexture;  // Texture from the first render pass
 
-const float offset = 1.0 / 800.0; // Adjust based on texture size
+uniform int screenWidth;
+uniform int screenHeight;
+
+float offset = 1.0 / screenWidth; // Adjust based on texture size
 
 vec2 offsets[9] = vec2[](
     vec2(-offset,  offset), vec2(0.0,  offset), vec2(offset,  offset),

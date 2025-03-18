@@ -99,7 +99,7 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     pp_shader = new Gloom::Shader();
-    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/pp.frag");
+    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/sobel.frag");
 
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
@@ -120,6 +120,8 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         pp_shader->activate();
+        glUniform1i(pp_shader->getUniformFromName("screenWidth"), windowWidth);
+        glUniform1i(pp_shader->getUniformFromName("screenHeight"), windowHeight);
         glBindVertexArray(quadVAO);
         glBindTexture(GL_TEXTURE_2D, colorTexture);
         glDrawArrays(GL_TRIANGLES, 0, 6);
