@@ -3,12 +3,18 @@
 //#define NUM_LIGHT_SOURCES 3
 #define NUM_LIGHT_SOURCES 3
 
-in layout(location = 0) vec3 normal;
+in layout(location = 0) vec3 normal_out;
 in layout(location = 1) vec2 textureCoordinates;
 
 in layout(location = 3) mat3 TBN;
 
-out vec4 color;
+//out vec4 color;
+
+
+// outputs to FBO
+layout (location = 0) out vec4 color;       // Output color
+layout (location = 1) out vec3 normal;      // Output normals
+layout (location = 2) out vec2 texCoords;   // Output texture coordinates
 
 float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
@@ -68,7 +74,7 @@ void main()
 
 
 
-        vec3 normalToUse = normal;
+        vec3 normalToUse = normal_out;
         vec3 baseDiffuseToUse = vec3(1.0, 1.0, 1.0);
 
         if (hasNormalMappedGeom) {
@@ -136,5 +142,8 @@ void main()
     vec3 finalColour = baseDiffuseToUse * (ambientIntensity + totalDiffuse + totalSpecular + dither(gl_FragCoord.xy));
 
     color = vec4(finalColour, 1.0);
+
+    normal = normalize(normal_out); // output face normal, not changed by our normal map.
+    texCoords = textureCoordinates;
 
 }
