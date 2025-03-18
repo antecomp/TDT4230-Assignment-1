@@ -1,5 +1,6 @@
 // Local headers
 #include "program.hpp"
+#include "glad/glad.h"
 #include "utilities/window.hpp"
 #include "gamelogic.h"
 #include <glm/glm.hpp>
@@ -14,6 +15,37 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <utilities/timeutils.h>
 
+GLuint createFBO(int width, int height, GLuint &colorTexture, GLuint &depthTexture) {
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    // Create color texture
+    glGenTextures(1, &colorTexture);
+    glBindTexture(GL_TEXTURE_2D, colorTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
+
+    // Create depth texture
+    glGenTextures(1, &depthTexture);
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+
+    // Check if FBO is complete
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer is not complete!" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    return fbo;
+}
+
+Gloom::Shader* pp_shader;
 
 void runProgram(GLFWwindow* window, CommandLineOptions options)
 {
@@ -36,9 +68,46 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
 
 	initGame(window, options);
 
+    /////////////////////////////////////////////
+
+    // Create FBO
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    GLuint colorTexture, depthTexture;
+    GLuint fbo = createFBO(windowWidth, windowHeight, colorTexture, depthTexture);
+
+    // Create a full-screen quad VAO
+    GLuint quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    float quadVertices[] = {
+        // positions   // texCoords
+        -1.0f, 1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f,
+        1.0f, -1.0f,  1.0f, 0.0f,
+
+        -1.0f, 1.0f,  0.0f, 1.0f,
+        1.0f, -1.0f,  1.0f, 0.0f,
+        1.0f,  1.0f,  1.0f, 1.0f
+    };
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+    pp_shader = new Gloom::Shader();
+    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/pp.frag");
+
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
     {
+
+        // Bind FBO
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
 	    // Clear colour and depth buffers
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -46,7 +115,14 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
         updateFrame(window);
         renderFrame(window);
 
+        // Now bind default framebuffer and render quad to apply our own PP shaders to...
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        pp_shader->activate();
+        glBindVertexArray(quadVAO);
+        glBindTexture(GL_TEXTURE_2D, colorTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
 

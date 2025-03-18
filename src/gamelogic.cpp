@@ -186,7 +186,7 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     shader = new Gloom::Shader();
     shader->makeBasicShader("../res/shaders/simple.vert", "../res/shaders/simple.frag");
-    shader->activate();
+    //shader->activate();
 
     // Create meshes
     Mesh box = cube(boxDimensions, glm::vec2(90), true, true);
@@ -484,7 +484,11 @@ void renderFrame(GLFWwindow* window) {
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
     glViewport(0, 0, windowWidth, windowHeight);
 
+    shader->activate();
+
     uploadUniforms();
 
     renderNode(rootNode);
+
+    shader->deactivate();
 }
