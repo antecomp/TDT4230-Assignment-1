@@ -13,6 +13,7 @@ in layout(location = 3) mat3 TBN;
 // These are sent to the FBO
 layout (location = 0) out vec4 color;
 layout (location = 1) out vec4 normalOutput;
+layout (location = 2) out vec4 toCameraOutput;
 
 float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
@@ -75,6 +76,17 @@ void main()
         vec3 baseDiffuseToUse = vec3(1.0, 1.0, 1.0);
 
         normalOutput = vec4(normal * 0.5 + 0.5, 1.0);
+
+        // Compute Euclidean distance to the camera
+        float depthValue = length(fragWSPosition - u_cameraPosition); 
+        // Normalize depth to a range (assuming max depth ~ 100 units for now)
+        float encodedDepth = clamp(depthValue / 100.0, 0.0, 1.0);
+
+        // Store depth as grayscale
+        toCameraOutput = vec4(vec3(encodedDepth), 1.0);
+
+        //color = toCameraOutput;
+        //return;
         
 
         if (hasNormalMappedGeom) {

@@ -15,7 +15,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <utilities/timeutils.h>
 
-GLuint createFBO(int width, int height, GLuint &colorTexture, GLuint &depthTexture, GLuint &normalTexture) {
+GLuint createFBO(int width, int height, GLuint &colorTexture, GLuint &depthTexture, GLuint &normalTexture, GLuint &toCameraTexture) {
     GLuint fbo;
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -45,9 +45,17 @@ GLuint createFBO(int width, int height, GLuint &colorTexture, GLuint &depthTextu
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
 
+    // "to camera" (worldspace depth)
+    glGenTextures(1, &toCameraTexture);
+    glBindTexture(GL_TEXTURE_2D, toCameraTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, toCameraTexture, 0);
+
     // Define multiple color attachments
-    GLenum attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-    glDrawBuffers(2, attachments); 
+    GLenum attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    glDrawBuffers(3, attachments);
 
     // Check if FBO is complete
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -86,8 +94,8 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     // Create FBO
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    GLuint colorTexture, depthTexture, normalTexture;
-    GLuint fbo = createFBO(windowWidth, windowHeight, colorTexture, depthTexture, normalTexture);
+    GLuint colorTexture, depthTexture, normalTexture, toCameraTexture;
+    GLuint fbo = createFBO(windowWidth, windowHeight, colorTexture, depthTexture, normalTexture, toCameraTexture);
 
     // Create a full-screen quad VAO
     GLuint quadVAO, quadVBO;
@@ -112,7 +120,7 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     pp_shader = new Gloom::Shader();
-    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/sobel.frag");
+    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/pp.frag");
 
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
@@ -137,6 +145,9 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
         glUniform1i(pp_shader->getUniformFromName("screenHeight"), windowHeight);
 
 
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, toCameraTexture);
+        glUniform1i(pp_shader->getUniformFromName("toCameraTexture"), 3);
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, normalTexture);
