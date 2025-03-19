@@ -120,7 +120,7 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     pp_shader = new Gloom::Shader();
-    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/pp.frag");
+    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/sobel.frag");
 
     // Rendering Loop
     while (!glfwWindowShouldClose(window))

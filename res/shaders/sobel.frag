@@ -5,6 +5,7 @@ out vec4 FragColor;
 
 uniform sampler2D screenTexture;  // Original scene colors
 uniform sampler2D normalTexture;  // Normal texture for edge detection
+uniform sampler2D toCameraTexture; // Holds distance to camera in grayscale.
 uniform int screenWidth;
 uniform int screenHeight;
 
@@ -35,9 +36,10 @@ void main()
     vec3 edgeY = vec3(0.0);
 
     for (int i = 0; i < 9; i++) {
+        vec3 depth = texture(toCameraTexture, TexCoords + offsets[i]).rgb;
         vec3 normal = texture(normalTexture, TexCoords + offsets[i]).rgb;
-        edgeX += normal * sobelKernelX[i];
-        edgeY += normal * sobelKernelY[i];
+        edgeX += depth * normal * sobelKernelX[i];
+        edgeY += depth * normal * sobelKernelY[i];
     }
 
     float edgeStrength = length(edgeX) + length(edgeY); // Compute Sobel magnitude
