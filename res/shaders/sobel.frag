@@ -3,17 +3,18 @@
 in vec2 TexCoords;
 out vec4 FragColor;
 
-uniform sampler2D sceneTexture;  // Texture from the first render pass
-
+uniform sampler2D screenTexture;  // Original scene colors
+uniform sampler2D normalTexture;  // Normal texture for edge detection
 uniform int screenWidth;
 uniform int screenHeight;
 
-float offset = 1.0 / screenWidth; // Adjust based on texture size
+float offsetX = 1.0 / screenWidth;
+float offsetY = 1.0 / screenHeight;
 
 vec2 offsets[9] = vec2[](
-    vec2(-offset,  offset), vec2(0.0,  offset), vec2(offset,  offset),
-    vec2(-offset,  0.0),    vec2(0.0,  0.0),    vec2(offset,  0.0),
-    vec2(-offset, -offset), vec2(0.0, -offset), vec2(offset, -offset)
+    vec2(-offsetX,  offsetY), vec2(0.0,  offsetY), vec2(offsetX,  offsetY),
+    vec2(-offsetX,  0.0),     vec2(0.0,  0.0),     vec2(offsetX,  0.0),
+    vec2(-offsetX, -offsetY), vec2(0.0, -offsetY), vec2(offsetX, -offsetY)
 );
 
 float sobelKernelX[9] = float[](
@@ -30,21 +31,25 @@ float sobelKernelY[9] = float[](
 
 void main()
 {
-    float edgeX = 0.0;
-    float edgeY = 0.0;
+    vec3 edgeX = vec3(0.0);
+    vec3 edgeY = vec3(0.0);
 
     for (int i = 0; i < 9; i++) {
-        vec3 color = texture(sceneTexture, TexCoords + offsets[i]).rgb;
-        float intensity = dot(color, vec3(0.299, 0.587, 0.114)); // Convert to grayscale
-        edgeX += intensity * sobelKernelX[i];
-        edgeY += intensity * sobelKernelY[i];
+        vec3 normal = texture(normalTexture, TexCoords + offsets[i]).rgb;
+        edgeX += normal * sobelKernelX[i];
+        edgeY += normal * sobelKernelY[i];
     }
 
-    float edgeStrength = sqrt(edgeX * edgeX + edgeY * edgeY);
+    float edgeStrength = length(edgeX) + length(edgeY); // Compute Sobel magnitude
+
+    // Edge threshold: Strong edges are detected here
+    float edgeFactor = smoothstep(0.1, 0.3, edgeStrength); // 0 = no edge, 1 = strong edge
+
+    // Sample the base color texture
+    vec3 baseColor = texture(screenTexture, TexCoords).rgb;
 
     // Invert colors where edges are detected
-    vec3 originalColor = texture(sceneTexture, TexCoords).rgb;
-    vec3 finalColor = mix(originalColor, vec3(1.0) - originalColor, step(0.2, edgeStrength));
+    vec3 finalColor = mix(baseColor, vec3(1.0) - baseColor, edgeFactor);
 
     FragColor = vec4(finalColor, 1.0);
 }

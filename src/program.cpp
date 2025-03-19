@@ -112,7 +112,7 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     pp_shader = new Gloom::Shader();
-    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/pp.frag");
+    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/sobel.frag");
 
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
@@ -137,10 +137,13 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
         glUniform1i(pp_shader->getUniformFromName("screenHeight"), windowHeight);
 
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, colorTexture);
+
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, normalTexture);
+
+        // Color needs to be last otherwise it accidentally uses the normal maps????????????????
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, colorTexture);
 
         glUniform1i(pp_shader->getUniformFromName("screenTexture"), 0);
         glUniform1i(pp_shader->getUniformFromName("normalTexture"), 1);
