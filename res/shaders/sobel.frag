@@ -45,7 +45,7 @@ void main()
         edgeY += depth * normal * sobelKernelY[i];
     }
 
-    float edgeStrength = length(edgeX) + length(edgeY); // Compute Sobel magnitude
+    float edgeStrength = (length(edgeX) + length(edgeY)) * 0.33; // Compute Sobel magnitude
 
     // Edge threshold: Strong edges are detected here
     float edgeFactor = smoothstep(0.1, 0.3, edgeStrength); // 0 = no edge, 1 = strong edge
