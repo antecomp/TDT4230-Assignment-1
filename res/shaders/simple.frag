@@ -8,7 +8,11 @@ in layout(location = 1) vec2 textureCoordinates;
 
 in layout(location = 3) mat3 TBN;
 
-out vec4 color;
+//out vec4 color;
+
+// These are sent to the FBO
+layout (location = 0) out vec4 color;
+layout (location = 1) out vec4 normalOutput;
 
 float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
@@ -63,13 +67,15 @@ void main()
         //color = vec4(textureCoordinates, 0.0, 1.0); // Both coordinates
         //color = vec4(textureCoordinates.x, 0.0, 0.0, 1.0); // Red = U coordinate (this is the one I messed up lol)
 
+        normalOutput = vec4(0.0, 1.0, 1.0, 1.0);
+
         return;
     }
-
-
-
         vec3 normalToUse = normal;
         vec3 baseDiffuseToUse = vec3(1.0, 1.0, 1.0);
+
+        normalOutput = vec4(normal * 0.5 + 0.5, 1.0);
+        
 
         if (hasNormalMappedGeom) {
             vec3 diffuseColor = texture(diffuseSampler, textureCoordinates).rgb;

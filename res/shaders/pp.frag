@@ -1,18 +1,18 @@
 #version 450 core
 out vec4 FragColor; // Output color
 
-in vec2 TexCoords;  // Input texture coordinates from the vertex shader
+in vec2 TexCoords;  // Input texture coordinates
 
-uniform sampler2D screenTexture; // Texture from the FBO
+uniform sampler2D screenTexture;  // Base color texture
+uniform sampler2D normalTexture;  // Normal texture
 
 void main() {
-    // Sample the texture and output the color
-    FragColor = texture(screenTexture, TexCoords);
+    vec3 baseColor = texture(screenTexture, TexCoords).rgb;
+    vec3 normalColor = texture(normalTexture, TexCoords).rgb;
 
-    // Example post-processing effect: invert colors
-    FragColor = vec4(vec3(1.0 - texture(screenTexture, TexCoords)), 1.0);
+    float blendFactor = TexCoords.x; // 0 on the left, 1 on the right
 
-    // Example grayscale effect
-    // vec3 color = texture(screenTexture, TexCoords).rgb;
-    // float gray = dot(color, vec3(0.2126, 0.7152, 0.
+    vec3 blended = mix(baseColor, normalColor, blendFactor);
+    
+    FragColor = vec4(blended, 1.0);
 }

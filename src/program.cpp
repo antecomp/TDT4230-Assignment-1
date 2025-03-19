@@ -15,7 +15,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <utilities/timeutils.h>
 
-GLuint createFBO(int width, int height, GLuint &colorTexture, GLuint &depthTexture) {
+GLuint createFBO(int width, int height, GLuint &colorTexture, GLuint &depthTexture, GLuint &normalTexture) {
     GLuint fbo;
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -28,6 +28,15 @@ GLuint createFBO(int width, int height, GLuint &colorTexture, GLuint &depthTextu
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
 
+    // Texture for normals
+    glGenTextures(1, &normalTexture);
+    glBindTexture(GL_TEXTURE_2D, normalTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, normalTexture, 0);
+
+
     // Create depth texture
     glGenTextures(1, &depthTexture);
     glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -35,6 +44,10 @@ GLuint createFBO(int width, int height, GLuint &colorTexture, GLuint &depthTextu
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+
+    // Define multiple color attachments
+    GLenum attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, attachments); 
 
     // Check if FBO is complete
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -73,8 +86,8 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     // Create FBO
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    GLuint colorTexture, depthTexture;
-    GLuint fbo = createFBO(windowWidth, windowHeight, colorTexture, depthTexture);
+    GLuint colorTexture, depthTexture, normalTexture;
+    GLuint fbo = createFBO(windowWidth, windowHeight, colorTexture, depthTexture, normalTexture);
 
     // Create a full-screen quad VAO
     GLuint quadVAO, quadVBO;
@@ -99,7 +112,7 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
     pp_shader = new Gloom::Shader();
-    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/sobel.frag");
+    pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/pp.frag");
 
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
@@ -122,8 +135,19 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
         pp_shader->activate();
         glUniform1i(pp_shader->getUniformFromName("screenWidth"), windowWidth);
         glUniform1i(pp_shader->getUniformFromName("screenHeight"), windowHeight);
-        glBindVertexArray(quadVAO);
+
+
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, colorTexture);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, normalTexture);
+
+        glUniform1i(pp_shader->getUniformFromName("screenTexture"), 0);
+        glUniform1i(pp_shader->getUniformFromName("normalTexture"), 1);
+
+
+        glBindVertexArray(quadVAO);
+        //glBindTexture(GL_TEXTURE_2D, colorTexture);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
 

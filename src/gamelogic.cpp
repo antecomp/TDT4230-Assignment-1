@@ -418,6 +418,10 @@ void renderNode(SceneNode* node) {
                 glBindTextureUnit(1, node->textureID);
 
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+
+                // Reset to avoid unintended bindings
+                glBindTexture(GL_TEXTURE_2D, 0);
+                glBindTextureUnit(1, 0);
             }
             break;
         case POINT_LIGHT: break;
@@ -453,6 +457,10 @@ void renderNode(SceneNode* node) {
 
                 glBindVertexArray(node->vertexArrayObjectID); // totally didnt forget to put this and struggle to debug for hours :^)
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+
+                // Reset to avoid unintended bindings
+                glBindTexture(GL_TEXTURE_2D, 0);
+                glBindTextureUnit(1, 0);
             }
         break;
         case NORMAL_MAPPED_GEOMETRY:
@@ -468,6 +476,12 @@ void renderNode(SceneNode* node) {
 
                 glBindVertexArray(node->vertexArrayObjectID);
                 glDrawElements(GL_TRIANGLES, node->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+
+                glBindTexture(GL_TEXTURE_2D, 0);
+                glBindTextureUnit(1, 0);
+                glBindTextureUnit(2, 0);
+
+
             }
         break;
         case FIRST_PERSON_CAMERA:
