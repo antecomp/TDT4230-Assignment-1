@@ -36,7 +36,10 @@ void main()
     vec3 edgeY = vec3(0.0);
 
     for (int i = 0; i < 9; i++) {
-        vec3 depth = texture(toCameraTexture, TexCoords + offsets[i]).rgb;
+        float rawDepth = texture(toCameraTexture, TexCoords + offsets[i]).r;
+        float adjustedDepth = pow(rawDepth, 0.25); // Adjust curve (closer objects keep stronger depth difference)
+        vec3 depth = vec3(adjustedDepth);
+        //vec3 depth = vec3(rawDepth)
         vec3 normal = texture(normalTexture, TexCoords + offsets[i]).rgb;
         edgeX += depth * normal * sobelKernelX[i];
         edgeY += depth * normal * sobelKernelY[i];
