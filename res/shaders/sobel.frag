@@ -46,22 +46,38 @@ float bayerDither(vec2 coord) {
 
 void main()
 {
+
+    // vec4 normal = texture(normalTexture, TexCoords);
+    // vec4 depth = texture(toCameraTexture, TexCoords);
+    // FragColor = depth * normal;
+    // return;
+
     vec3 edgeX = vec3(0.0);
     vec3 edgeY = vec3(0.0);
 
-    for (int i = 0; i < 9; i++) {
-        float rawDepth = texture(toCameraTexture, TexCoords + offsets[i]).r;
-        float adjustedDepth = pow(rawDepth, 0.11); // Adjust curve (closer objects keep stronger depth difference)
-        vec3 depth = vec3(rawDepth);
-        //vec3 depth = vec3(rawDepth)
+    for(int i = 0; i < 9; i++) {
         vec3 normal = texture(normalTexture, TexCoords + offsets[i]).rgb;
+        vec3 depth = texture(toCameraTexture, TexCoords + offsets[i]).rgb;
+
         edgeX += depth * normal * sobelKernelX[i];
         edgeY += depth * normal * sobelKernelY[i];
 
-        //FragColor = vec4(vec3(depth * normal), 1.0);
 
-        FragColor = vec4(vec3(rawDepth), 1.0);
-    }
+    }   
+
+    // for (int i = 0; i < 9; i++) {
+    //     float rawDepth = texture(toCameraTexture, TexCoords + offsets[i]).r;
+    //     float adjustedDepth = pow(rawDepth, 0.11); // Adjust curve (closer objects keep stronger depth difference)
+    //     vec3 depth = vec3(rawDepth);
+    //     //vec3 depth = vec3(rawDepth)
+    //     vec3 normal = texture(normalTexture, TexCoords + offsets[i]).rgb;
+    //     edgeX += depth * normal * sobelKernelX[i];
+    //     edgeY += depth * normal * sobelKernelY[i];
+
+    //     //FragColor = vec4(vec3(depth * normal), 1.0);
+
+    //     FragColor = vec4(vec3(rawDepth), 1.0);
+    // }
 
     float edgeStrength = (length(edgeX) + length(edgeY)) * 0.33; // Compute Sobel magnitude
 

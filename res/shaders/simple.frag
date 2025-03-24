@@ -94,8 +94,12 @@ void main()
         float depthValue = length(fragWSPosition);
         float encodedDepth = mod(depthValue, 200.0) / 200.0; // 50 is an arbitrary wrap-around value to get us into [0,1]
 
+        // Option 4: Worldspace (More)
+        vec3 encoided = normalize(fragWSPosition) * 0.5 + 0.5;
+        toCameraOutput = vec4(encoided, 1.0);
+
         // Store depth as grayscale
-        toCameraOutput = vec4(vec3(encodedDepth), 1.0);
+        //toCameraOutput = vec4(vec3(encodedDepth), 1.0);
 
         //color = toCameraOutput;
         //return;
