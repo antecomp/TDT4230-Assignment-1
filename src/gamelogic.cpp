@@ -16,6 +16,7 @@
 #include "glm/ext/vector_float3.hpp"
 #include "glm/fwd.hpp"
 #include "glm/matrix.hpp"
+#include "glm/trigonometric.hpp"
 #include "sceneGraph.hpp"
 #include "utilities/window.hpp"
 #define GLM_ENABLE_EXPERIMENTAL // Required by transform
@@ -73,6 +74,8 @@ SceneNode* headNode; // Holds "pitch"
 float cameraYaw = 0.0f;
 float cameraPitch = 0.0f;
 glm::mat4 cameraTransform;
+float FOV = glm::radians(45.0);
+float horizontalFOV = 2.0f * glm::atan(glm::tan(FOV / 2.0f) * ((float)windowWidth / windowHeight));
 
 #define NUM_LIGHT_SOURCES 3
 // Node data for easy use with the existing scene graph layout
@@ -314,7 +317,7 @@ void updateFrame(GLFWwindow* window) {
     }
 
     // Camera/Transformation
-    projection = glm::perspective(glm::radians(80.0f), float(windowWidth) / float(windowHeight), 0.1f, 350.f);
+    projection = glm::perspective(FOV, float(windowWidth) / float(windowHeight), 0.1f, 350.f);
     updateMovement(timeDelta);
     updateCamera();
 

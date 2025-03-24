@@ -7,3 +7,8 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 void initGame(GLFWwindow* window, CommandLineOptions options);
 void updateFrame(GLFWwindow* window);
 void renderFrame(GLFWwindow* window);
+
+extern float cameraYaw;
+extern float cameraPitch;
+extern float FOV;
+extern float horizontalFOV;

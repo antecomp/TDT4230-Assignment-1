@@ -9,6 +9,9 @@ uniform sampler2D toCameraTexture; // Holds distance to camera in grayscale.
 uniform int screenWidth;
 uniform int screenHeight;
 
+uniform float ditherOffsetX;
+uniform float ditherOffsetY;
+
 float offsetX = 1.0 / screenWidth;
 float offsetY = 1.0 / screenHeight;
 
@@ -42,6 +45,18 @@ float bayerDither(vec2 coord) {
     );
 
     return bayerMatrix[index] / 16.0;
+}
+
+float blueNoiseDither(vec2 coord) {
+    coord = mod(floor(coord), 4.0);
+    int index = int(coord.x) + int(coord.y) * 4;
+    const float blueNoiseMatrix[16] = float[](
+        6.0,  14.0,  3.0,  11.0,
+        1.0,  9.0,  5.0,  13.0,
+        15.0,  7.0,  12.0,  4.0,
+        8.0,  0.0,  10.0,  2.0
+    );
+    return blueNoiseMatrix[index] / 16.0;
 }
 
 void main()
@@ -92,7 +107,7 @@ void main()
     vec3 finalColor = mix(baseColor, vec3(1.0) - baseColor, edgeFactor);
 
     // Dither time
-    float ditherThreshhold = bayerDither(vec2(screenWidth * TexCoords.x, screenHeight * TexCoords.y));
+    float ditherThreshhold = bayerDither(vec2(screenWidth * TexCoords.x + ditherOffsetX, screenHeight * TexCoords.y + ditherOffsetY));
     float brightness = dot(finalColor.rgb, vec3(0.299, 0.587, 0.144));
     finalColor = step(ditherThreshhold, vec3(brightness));
 

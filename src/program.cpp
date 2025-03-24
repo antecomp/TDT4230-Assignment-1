@@ -132,6 +132,8 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
 	    // Clear colour and depth buffers
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        float dither_offset_x = -(windowWidth * cameraYaw) / horizontalFOV;
+        float dither_offset_y = (windowHeight * cameraPitch) / FOV;
 
         updateFrame(window);
         renderFrame(window);
@@ -143,6 +145,9 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
         pp_shader->activate();
         glUniform1i(pp_shader->getUniformFromName("screenWidth"), windowWidth);
         glUniform1i(pp_shader->getUniformFromName("screenHeight"), windowHeight);
+
+        glUniform1f(pp_shader->getUniformFromName("ditherOffsetX"), dither_offset_x);
+        glUniform1f(pp_shader->getUniformFromName("ditherOffsetY"), dither_offset_y);
 
 
         glActiveTexture(GL_TEXTURE3);

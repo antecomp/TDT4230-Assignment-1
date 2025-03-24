@@ -167,7 +167,7 @@ void main()
         totalSpecular += L * spec * specularColour;
     }
 
-    vec3 finalColour = baseDiffuseToUse * (ambientIntensity + totalDiffuse + totalSpecular + dither(gl_FragCoord.xy));
+    vec3 finalColour = baseDiffuseToUse * (ambientIntensity + totalDiffuse + totalSpecular);
 
     color = vec4(finalColour, 1.0);
 
