@@ -23,6 +23,10 @@ uniform bool is2D;
 
 uniform mat4 Ortho;
 
+uniform vec3 u_cameraPosition;
+flat out float faceDistance; // Mark face based on it's distance from the camera.
+// I think flat just picks one of the vertices to use which should be good enough I reckon.
+
 void main()
 {
     if(is2D) {
@@ -43,4 +47,7 @@ void main()
     textureCoordinates_out = textureCoordinates_in;
     fragWSPosition = (M * vec4(position, 1.0f)).xyz;
     gl_Position = MVP * vec4(position, 1.0f); 
+
+    // Averaged over each vertex.
+    faceDistance = length(u_cameraPosition - fragWSPosition);
 }

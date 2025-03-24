@@ -51,12 +51,14 @@ void main()
 
     for (int i = 0; i < 9; i++) {
         float rawDepth = texture(toCameraTexture, TexCoords + offsets[i]).r;
-        float adjustedDepth = pow(rawDepth, 0.25); // Adjust curve (closer objects keep stronger depth difference)
+        float adjustedDepth = pow(rawDepth, 0.11); // Adjust curve (closer objects keep stronger depth difference)
         vec3 depth = vec3(adjustedDepth);
         //vec3 depth = vec3(rawDepth)
         vec3 normal = texture(normalTexture, TexCoords + offsets[i]).rgb;
         edgeX += depth * normal * sobelKernelX[i];
         edgeY += depth * normal * sobelKernelY[i];
+
+        //FragColor = vec4(vec3(rawDepth), 1.0);
     }
 
     float edgeStrength = (length(edgeX) + length(edgeY)) * 0.33; // Compute Sobel magnitude

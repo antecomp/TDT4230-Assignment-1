@@ -43,6 +43,9 @@ layout(binding = 0) uniform sampler2D textSampler;
 layout(binding = 1) uniform sampler2D diffuseSampler;
 layout(binding = 2) uniform sampler2D normalMapSampler;
 
+
+flat in float faceDistance;
+
 void main()
 {
 
@@ -80,7 +83,12 @@ void main()
         // Compute Euclidean distance to the camera
         float depthValue = length(fragWSPosition - u_cameraPosition); 
         // Normalize depth to a range (assuming max depth ~ 100 units for now)
-        float encodedDepth = clamp(depthValue / 100.0, 0.0, 1.0);
+
+        // Option 1: Use interpolated distance:
+        //float encodedDepth = clamp(depthValue / 100.0, 0.0, 1.0);
+
+        // Option 2: Use flat distance:
+        float encodedDepth = clamp(faceDistance / 100.0, 0.0, 1.0);
 
         // Store depth as grayscale
         toCameraOutput = vec4(vec3(encodedDepth), 1.0);
