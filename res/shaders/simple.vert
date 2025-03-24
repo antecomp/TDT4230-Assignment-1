@@ -24,7 +24,7 @@ uniform bool is2D;
 uniform mat4 Ortho;
 
 uniform vec3 u_cameraPosition;
-flat out float faceDistance; // Mark face based on it's distance from the camera.
+flat out vec3 faceDistance; // Mark face based on it's distance from the camera.
 // I think flat just picks one of the vertices to use which should be good enough I reckon.
 
 void main()
@@ -49,5 +49,6 @@ void main()
     gl_Position = MVP * vec4(position, 1.0f); 
 
     // What frag position is this grabbing? Average I hope?
-    faceDistance = length(u_cameraPosition - fragWSPosition);
+    //faceDistance = length(u_cameraPosition - fragWSPosition);
+    faceDistance = fragWSPosition;
 }

@@ -44,7 +44,7 @@ layout(binding = 1) uniform sampler2D diffuseSampler;
 layout(binding = 2) uniform sampler2D normalMapSampler;
 
 
-flat in float faceDistance;
+flat in vec3 faceDistance;
 
 void main()
 {
@@ -97,6 +97,9 @@ void main()
         // Option 4: Worldspace (More)
         vec3 encoided = normalize(fragWSPosition) * 0.5 + 0.5;
         toCameraOutput = vec4(encoided, 1.0);
+
+        // Option 5: ?????
+        toCameraOutput = vec4(normalize(faceDistance) * 0.5 + 0.5, 1.0);
 
         // Store depth as grayscale
         //toCameraOutput = vec4(vec3(encodedDepth), 1.0);
