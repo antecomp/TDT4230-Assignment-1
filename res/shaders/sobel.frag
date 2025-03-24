@@ -30,6 +30,20 @@ float sobelKernelY[9] = float[](
    -1, -2, -1
 );
 
+
+float bayerDither(vec2 coord) {
+    coord = mod(floor(coord), 4.0);
+    int index = int(coord.x) + int(coord.y) * 4;
+    const float bayerMatrix[16] = float[](
+        0.0,  8.0,  2.0,  10.0,
+        12.0, 4.0,  14.0, 6.0,
+        3.0,  11.0, 1.0,  9.0,
+        15.0, 7.0,  13.0, 5.0
+    );
+
+    return bayerMatrix[index] / 16.0;
+}
+
 void main()
 {
     vec3 edgeX = vec3(0.0);
@@ -55,6 +69,13 @@ void main()
 
     // Invert colors where edges are detected
     vec3 finalColor = mix(baseColor, vec3(1.0) - baseColor, edgeFactor);
+
+    // Dither time
+    float ditherThreshhold = bayerDither(vec2(screenWidth * TexCoords.x, screenHeight * TexCoords.y));
+    float brightness = dot(finalColor.rgb, vec3(0.299, 0.587, 0.144));
+    finalColor = step(ditherThreshhold, vec3(brightness));
+
+    //finalColor = vec3(ditherThreshhold);
 
     FragColor = vec4(finalColor, 1.0);
 }
