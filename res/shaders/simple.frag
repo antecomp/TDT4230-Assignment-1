@@ -81,14 +81,18 @@ void main()
         normalOutput = vec4(normal * 0.5 + 0.5, 1.0);
 
         // Compute Euclidean distance to the camera
-        float depthValue = length(fragWSPosition - u_cameraPosition); 
+        //float depthValue = length(fragWSPosition - u_cameraPosition); 
         // Normalize depth to a range (assuming max depth ~ 100 units for now)
 
         // Option 1: Use interpolated distance:
         //float encodedDepth = clamp(depthValue / 100.0, 0.0, 1.0);
 
         // Option 2: Use flat distance:
-        float encodedDepth = clamp(faceDistance / 100.0, 0.0, 1.0);
+        //float encodedDepth = clamp(faceDistance / 100.0, 0.0, 1.0);
+
+        // Option 3: Worldspace
+        float depthValue = length(fragWSPosition);
+        float encodedDepth = mod(depthValue, 200.0) / 200.0; // 50 is an arbitrary wrap-around value to get us into [0,1]
 
         // Store depth as grayscale
         toCameraOutput = vec4(vec3(encodedDepth), 1.0);
