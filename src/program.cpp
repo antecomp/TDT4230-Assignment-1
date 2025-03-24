@@ -173,6 +173,18 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
         // Flip buffers
         glfwSwapBuffers(window);
     }
+
+    glDeleteTextures(1, &colorTexture);
+    glDeleteTextures(1, &depthTexture);
+    glDeleteTextures(1, &normalTexture);
+    glDeleteTextures(1, &toCameraTexture);
+
+    glDeleteFramebuffers(1, &fbo);
+
+    glDeleteVertexArrays(1, &quadVAO);
+    glDeleteBuffers(1, &quadVBO);
+
+    pp_shader->destroy();
 }
 
 

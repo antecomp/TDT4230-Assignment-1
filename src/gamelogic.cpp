@@ -240,14 +240,14 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
     boxNode->VAOIndexCount        = box.indices.size();
 
     // I added all this, Mesh stuff for text
-    Mesh textMesh = generateTextGeometryBuffer("TDT4230 Final Project", 39.0/29, 500);
-    unsigned int textVAO = generateBuffer(textMesh);
-    textNode = createSceneNode();
-    textNode->nodeType = GEOMETRY_2D;
-    textNode->vertexArrayObjectID = textVAO;
-    textNode->VAOIndexCount = textMesh.indices.size();
-    rootNode->children.push_back(textNode);
-    textNode->position = glm::vec3(40, windowHeight - 40.0, 0.0f);
+    // Mesh textMesh = generateTextGeometryBuffer("TDT4230 Final Project", 39.0/29, 500);
+    // unsigned int textVAO = generateBuffer(textMesh);
+    // textNode = createSceneNode();
+    // textNode->nodeType = GEOMETRY_2D;
+    // textNode->vertexArrayObjectID = textVAO;
+    // textNode->VAOIndexCount = textMesh.indices.size();
+    // rootNode->children.push_back(textNode);
+    // textNode->position = glm::vec3(40, windowHeight - 40.0, 0.0f);
 
     ////////////
 
@@ -339,13 +339,13 @@ void updateNodeTransformations(SceneNode* node, glm::mat4 transformationThusFar)
 
     node->currentTransformationMatrix = transformationThusFar * transformationMatrix;
 
-    switch(node->nodeType) {
-        case GEOMETRY: break;
-        case POINT_LIGHT: break;
-        case SPOT_LIGHT: break;
-        case GEOMETRY_2D: break;
-        case NORMAL_MAPPED_GEOMETRY: break;
-    }        
+    // switch(node->nodeType) {
+    //     case GEOMETRY: break;
+    //     case POINT_LIGHT: break;
+    //     case SPOT_LIGHT: break;
+    //     case GEOMETRY_2D: break;
+    //     case NORMAL_MAPPED_GEOMETRY: break;
+    // }        
 
     for(SceneNode* child : node->children) {
         updateNodeTransformations(child, node->currentTransformationMatrix);
@@ -440,6 +440,8 @@ void renderNode(SceneNode* node) {
                 glUniform1i(is2DULoc, true);
 
                 // Texturing stuff
+
+                // Pretty sure this is causing a slow burn GPU memleak lol.
                 auto textTextureID = createTexture(fontImage);
                 glBindTexture(GL_TEXTURE_2D, textTextureID); // idk why I had this, works without. Keeping comment just in case.
                 glBindTextureUnit(0, textTextureID);
