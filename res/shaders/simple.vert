@@ -48,6 +48,6 @@ void main()
     fragWSPosition = (M * vec4(position, 1.0f)).xyz;
     gl_Position = MVP * vec4(position, 1.0f); 
 
-    // Averaged over each vertex.
+    // What frag position is this grabbing? Average I hope?
     faceDistance = length(u_cameraPosition - fragWSPosition);
 }
