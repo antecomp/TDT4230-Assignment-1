@@ -14,6 +14,7 @@ in layout(location = 3) mat3 TBN;
 layout (location = 0) out vec4 color;
 layout (location = 1) out vec4 normalOutput;
 layout (location = 2) out vec4 toCameraOutput;
+layout (location = 3) out uint objectIDOut; // a "texture" associating fragments with an object ID.
 
 float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
@@ -46,8 +47,22 @@ layout(binding = 2) uniform sampler2D normalMapSampler;
 
 flat in float faceDistance;
 
+uniform int objectID;
+
+vec3 debugColorFromObjectID(int id) {
+    return vec3(
+        float((id * 47) % 256) / 255.0,
+        float((id * 97) % 256) / 255.0,
+        float((id * 151) % 256) / 255.0
+    );
+}
+
 void main()
 {
+
+    // color = vec4(debugColorFromObjectID(objectID) * (normal * 0.5), 1.0);
+    // return;
+    objectIDOut = uint(objectID);
 
     // I.e used for our text layer.
     if(is2D) {
@@ -78,7 +93,7 @@ void main()
         vec3 normalToUse = normal;
         vec3 baseDiffuseToUse = vec3(1.0, 1.0, 1.0);
 
-        normalOutput = vec4(normal * 0.5 + 0.5, 1.0);
+        normalOutput = vec4(normal * 0.5 + 0.5, 1.0); // Encoded as [0,1] might change this back to [-1,1] idk.
 
         // Compute Euclidean distance to the camera
         //float depthValue = length(fragWSPosition - u_cameraPosition); 

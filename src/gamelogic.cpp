@@ -412,6 +412,10 @@ void renderNode(SceneNode* node) {
     GLuint hasNormalMappedGeomLoc = shader->getUniformFromName("hasNormalMappedGeom");
     glUniform1i(hasNormalMappedGeomLoc, false);
 
+    // Test - Upload an ID to differentiate every
+    glUniform1i(shader->getUniformFromName("objectID"), node->objectID);
+
+
     switch(node->nodeType) {
         case GEOMETRY:
             if(node->vertexArrayObjectID != -1) {

@@ -20,6 +20,9 @@ enum SceneNodeType {
 };
 
 struct SceneNode {
+	static inline int nextID = 0; // Track a unique ID for every scene node
+	int objectID;
+
 	SceneNode() {
 		position = glm::vec3(0, 0, 0);
 		rotation = glm::vec3(0, 0, 0);
@@ -34,6 +37,9 @@ struct SceneNode {
 		// I added these...
 		textureID = 0;
         normalMapTextureID = 0;  // New normal map texture ID
+
+		objectID = nextID++;
+		
 
 	}
 
