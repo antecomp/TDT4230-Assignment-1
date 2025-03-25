@@ -19,7 +19,7 @@ layout (location = 3) out uint objectIDOut; // a "texture" associating fragments
 float rand(vec2 co) { return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453); }
 float dither(vec2 uv) { return (rand(uv)*2.0-1.0) / 256.0; }
 
-vec3 ambientIntensity = vec3(0.15, 0.15, 0.15);
+vec3 ambientIntensity = vec3(0.12, 0.12, 0.12);
 
 struct LightSource {
     vec3 position;
@@ -146,7 +146,8 @@ void main()
     // Sample the texture, but if it's black (no texture), use a default color
     vec3 diffuseColor = texture(diffuseSampler, textureCoordinates).rgb;
     if (diffuseColor == vec3(0.0, 0.0, 0.0)) { 
-        diffuseColor = vec3(1.0, 0.8, 0.5); // Fallback placeholder color (warm orange)
+        //diffuseColor = vec3(1.0, 0.8, 0.5); // Fallback placeholder color (warm orange)
+        diffuseColor = vec3(0.5, 0.4, 0.25);
     }
     baseDiffuseToUse = diffuseColor;
 

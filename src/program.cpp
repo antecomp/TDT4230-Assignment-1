@@ -120,7 +120,6 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     glBindVertexArray(quadVAO);
     glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
     float quadVertices[] = {
-        // positions   // texCoords
         -1.0f, 1.0f,  0.0f, 1.0f,
         -1.0f, -1.0f, 0.0f, 0.0f,
         1.0f, -1.0f,  1.0f, 0.0f,
