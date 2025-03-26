@@ -62,30 +62,36 @@ void main()
    vec3 centerNormal = unpackNormal(texture(normalTexture, TexCoords).rgb);
    uint centerID = texelFetch(objectIDMap, uv, 0).r;
 
-    // Neighbours... 
-    ivec2 upUV    = uv + ivec2(0, 1);
-    ivec2 leftUV  = uv - ivec2(1, 0);
-    vec3 upNormal    = unpackNormal(texelFetch(normalTexture, upUV, 0).rgb);
-    uint upID        = texelFetch(objectIDMap, upUV, 0).r;
-    vec3 leftNormal  = unpackNormal(texelFetch(normalTexture, leftUV, 0).rgb);
-    uint leftID      = texelFetch(objectIDMap, leftUV, 0).r;
+    bool edge = false;
 
-    bool edge = false
-        || isEdge(centerNormal, upNormal, centerID, upID)
-        || isEdge(centerNormal, leftNormal, centerID, leftID);
+    ivec2 offsets[4] = ivec2[](
+        ivec2( 0,  1),
+        ivec2( 1,  0),
+        ivec2( 0, -1),
+        ivec2(-1,  0)
+    );
+
+    for(int i = 0; i < 4; ++i) {
+        ivec2 neighborUV = uv + offsets[i];
+        vec3 neighborNormal = unpackNormal(texelFetch(normalTexture, neighborUV, 0).rgb);
+        uint neighborID     = texelFetch(objectIDMap, neighborUV, 0).r;
+        edge = edge || isEdge(centerNormal, neighborNormal, centerID, neighborID);
+    }
 
     // Texture map representing the render of the scene...
     vec3 baseColor = texture(screenTexture, TexCoords).rgb;
-
-    // Invert Colour At Edges
-    if(edge) {
-        baseColor = 1.0 - baseColor;
-    }
 
     // Dither time
     float ditherThreshhold = bayerDither(vec2(screenWidth * TexCoords.x + ditherOffsetX, screenHeight * TexCoords.y + ditherOffsetY));
     float brightness = dot(baseColor.rgb, vec3(0.299, 0.587, 0.144));
     baseColor = step(ditherThreshhold, vec3(brightness));
+
+    // Invert Colour At Edges
+    if(edge) {
+        //baseColor = 1.0 - baseColor;
+        baseColor = vec3(brightness < 0.5 ? vec3(1.0) : vec3(0.0));
+    }
+
 
     FragColor = vec4(baseColor, 1.0);
 }
