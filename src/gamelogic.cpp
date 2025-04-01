@@ -62,8 +62,6 @@ SceneLight SceneLights[NUM_LIGHT_SOURCES];
 // These are heap allocated, because they should not be initialised at the start of the program
 Gloom::Shader* shader;
 
-const glm::vec3 boxDimensions(180, 90, 90);
-
 CommandLineOptions options;
 
 bool mouseLeftPressed   = false;
@@ -199,23 +197,38 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
 
     // Add Test Models.
-    SceneNode* testModel = loadGLBToSceneGraph("../res/gtlf/well_baked.glb");
+    SceneNode* well = loadGLBToSceneGraph("../res/gtlf/well_baked.glb");
+    rootNode->children.push_back(well);
+    well->position = glm::vec3(-10.0, -10.0, -10.0);
+    well->scale = glm::vec3(5.0, 5.0, 5.0);
 
-    if (!testModel) {
-        std::cerr << "Error: Failed to load GLB model" << std::endl;
-        exit(1);
-    }
-
-    rootNode->children.push_back(testModel);
-
-    testModel->position = glm::vec3(-10.0, -10.0, -10.0);
-    testModel->scale = glm::vec3(5.0, 5.0, 5.0);
+    SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/teapot_smooth.glb");
+    rootNode->children.push_back(teapot);
+    teapot->position = glm::vec3(10.0, -10.0, -10.0);
+    teapot->scale = glm::vec3(2.0, 2.0, 2.0);
+    teapot->rotation = glm::vec3(0.0, 3.1, 0.0);
 
     SceneNode* chair = loadGLBToSceneGraph("../res/gtlf/chair.glb");
     rootNode->children.push_back(chair);
-    chair->position = glm::vec3(10.0, -10.0, -10.0);
-    chair->scale = glm::vec3(2.0, 2.0, 2.0);
-    chair->rotation = glm::vec3(0.0, 3.1, 0.0);
+    chair->position = glm::vec3(-40.0, -10.0, -10.0);
+    chair->scale = glm::vec3(3.0, 3.0, 3.0);
+
+    Mesh box = cube(glm::vec3(20, 20, 20), glm::vec2(50), true, false);
+    unsigned int boxVAO  = generateBuffer(box);
+    SceneNode* boxNode  = createSceneNode();
+    boxNode->vertexArrayObjectID  = boxVAO;
+    boxNode->VAOIndexCount        = box.indices.size();
+    boxNode->position = glm::vec3(-70.0, 10.0, -10.0);
+    rootNode->children.push_back(boxNode);
+
+
+    Mesh box2 = cube(glm::vec3(10, 10, 10), glm::vec2(50), true, false);
+    unsigned int box2VAO  = generateBuffer(box2);
+    SceneNode* box2Node  = createSceneNode();
+    box2Node->vertexArrayObjectID  = box2VAO;
+    box2Node->VAOIndexCount        = box2.indices.size();
+    box2Node->position = glm::vec3(-70.0, 10.0, -40.0);
+    rootNode->children.push_back(box2Node);
 
 
     std::cout << fmt::format("Initialized scene with {} SceneNodes.", totalChildren(rootNode)) << std::endl;

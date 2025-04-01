@@ -71,6 +71,7 @@ void main()
         ivec2(-1,  0)
     );
 
+    // Change me to max of 2 for single-pixel lines
     for(int i = 0; i < 4; ++i) {
         ivec2 neighborUV = uv + offsets[i];
         vec3 neighborNormal = unpackNormal(texelFetch(normalTexture, neighborUV, 0).rgb);
