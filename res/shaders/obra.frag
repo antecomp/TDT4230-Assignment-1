@@ -86,6 +86,11 @@ void main()
     float brightness = dot(baseColor.rgb, vec3(0.299, 0.587, 0.144));
     baseColor = step(ditherThreshhold, vec3(brightness));
 
+    // Map pure black to black
+    if(brightness == 0.0) {
+        baseColor = vec3(0.0);
+    }
+
     // Invert Colour At Edges
     if(edge) {
         //baseColor = 1.0 - baseColor;
