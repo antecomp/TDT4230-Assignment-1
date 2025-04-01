@@ -47,7 +47,7 @@ float cameraYaw = 0.0f;
 float cameraPitch = 0.0f;
 glm::mat4 cameraTransform;
 float FOV = glm::radians(45.0);
-float horizontalFOV = 2.0f * glm::atan(glm::tan(FOV / 2.0f) * ((float)windowWidth / windowHeight));
+float horizontalFOV = 2.0f * glm::atan(glm::tan(FOV / 2.0f) * ((float)internalWidth / internalHeight));
 
 #define NUM_LIGHT_SOURCES 3
 // Node data for easy use with the existing scene graph layout
@@ -256,7 +256,7 @@ void updateFrame(GLFWwindow* window) {
     }
 
     // Camera/Transformation
-    projection = glm::perspective(FOV, float(windowWidth) / float(windowHeight), 0.1f, 350.f);
+    projection = glm::perspective(FOV, float(internalWidth) / float(internalHeight), 0.1f, 350.f);
     updateMovement(timeDelta);
     updateCamera();
 
@@ -396,7 +396,7 @@ void renderNode(SceneNode* node) {
 void renderFrame(GLFWwindow* window) {
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    glViewport(0, 0, windowWidth, windowHeight);
+    glViewport(0, 0, internalWidth, internalHeight);
 
     shader->activate();
 

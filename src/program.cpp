@@ -31,8 +31,8 @@ GLuint createFBO(
     glGenTextures(1, &colorTexture);
     glBindTexture(GL_TEXTURE_2D, colorTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
 
     // Texture for normals
@@ -82,6 +82,26 @@ GLuint createFBO(
     return fbo;
 }
 
+GLuint createSimpleFBO(int width, int height, GLuint &ppColorTex) {
+    GLuint fbo;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    // Create color texture
+    glGenTextures(1, &ppColorTex);
+    glBindTexture(GL_TEXTURE_2D, ppColorTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ppColorTex, 0);
+
+    GLenum attachments[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, attachments);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    return fbo;
+}
+
 Gloom::Shader* pp_shader;
 
 void runProgram(GLFWwindow* window, CommandLineOptions options)
@@ -111,7 +131,10 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
     GLuint colorTexture, depthTexture, normalTexture, toCameraTexture, objectIDTex;
-    GLuint fbo = createFBO(windowWidth, windowHeight, colorTexture, depthTexture, normalTexture, toCameraTexture, objectIDTex);
+    GLuint fbo = createFBO(internalWidth, internalHeight, colorTexture, depthTexture, normalTexture, toCameraTexture, objectIDTex);
+
+    GLuint ppColorTex;
+    GLuint ppFBO = createSimpleFBO(internalWidth, internalHeight, ppColorTex);
 
     // Create a full-screen quad VAO
     GLuint quadVAO, quadVBO;
@@ -137,6 +160,9 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
     pp_shader = new Gloom::Shader();
     pp_shader->makeBasicShader("../res/shaders/pp.vert", "../res/shaders/obra.frag");
 
+    auto pass_shader = new Gloom::Shader();
+    pass_shader->makeBasicShader("../res/shaders/pass.vert", "../res/shaders/pass.frag");
+
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
     {
@@ -147,19 +173,19 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
 	    // Clear colour and depth buffers
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float dither_offset_x = -(windowWidth * cameraYaw) / horizontalFOV;
-        float dither_offset_y = (windowHeight * cameraPitch) / FOV;
+        float dither_offset_x = -(internalWidth * cameraYaw) / horizontalFOV;
+        float dither_offset_y = (internalHeight * cameraPitch) / FOV;
 
         updateFrame(window);
         renderFrame(window);
 
-        // Now bind default framebuffer and render quad to apply our own PP shaders to...
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // Now bind pp framebuffer and render quad to apply our own PP shaders to...
+        glBindFramebuffer(GL_FRAMEBUFFER, ppFBO);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         pp_shader->activate();
-        glUniform1i(pp_shader->getUniformFromName("screenWidth"), windowWidth);
-        glUniform1i(pp_shader->getUniformFromName("screenHeight"), windowHeight);
+        glUniform1i(pp_shader->getUniformFromName("screenWidth"), internalWidth);
+        glUniform1i(pp_shader->getUniformFromName("screenHeight"), internalHeight);
 
         glUniform1f(pp_shader->getUniformFromName("ditherOffsetX"), dither_offset_x);
         glUniform1f(pp_shader->getUniformFromName("ditherOffsetY"), dither_offset_y);
@@ -182,9 +208,23 @@ void runProgram(GLFWwindow* window, CommandLineOptions options)
         glUniform1i(pp_shader->getUniformFromName("screenTexture"), 0);
         glUniform1i(pp_shader->getUniformFromName("normalTexture"), 1);
 
-
+        //glViewport(0, 0, windowWidth, windowHeight);
         glBindVertexArray(quadVAO);
         //glBindTexture(GL_TEXTURE_2D, colorTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        // Now draw to screen;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, windowWidth, windowHeight);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        pass_shader->activate();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, ppColorTex);
+        glUniform1i(pass_shader->getUniformFromName("screenTexture"), 0);
+
+        glBindVertexArray(quadVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
 

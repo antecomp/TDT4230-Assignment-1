@@ -13,9 +13,6 @@ uniform int screenHeight;
 uniform float ditherOffsetX;
 uniform float ditherOffsetY;
 
-float offsetX = 1.0 / screenWidth;
-float offsetY = 1.0 / screenHeight;
-
 vec3 debugColorFromObjectID(uint id) {
     return vec3(
         float((id * 47) % 256) / 255.0,
@@ -72,7 +69,7 @@ void main()
     );
 
     // Change me to max of 2 for single-pixel lines
-    for(int i = 0; i < 4; ++i) {
+    for(int i = 0; i < 2; ++i) {
         ivec2 neighborUV = uv + offsets[i];
         vec3 neighborNormal = unpackNormal(texelFetch(normalTexture, neighborUV, 0).rgb);
         uint neighborID     = texelFetch(objectIDMap, neighborUV, 0).r;
