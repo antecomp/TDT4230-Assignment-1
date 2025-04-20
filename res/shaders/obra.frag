@@ -81,6 +81,7 @@ void main()
 
     // Dither time
     float ditherThreshhold = bayerDither(vec2(screenWidth * TexCoords.x + ditherOffsetX, screenHeight * TexCoords.y + ditherOffsetY));
+    //float ditherThreshhold = bayerDither(vec2(screenWidth * TexCoords.x, screenHeight * TexCoords.y));
     float brightness = dot(baseColor.rgb, vec3(0.299, 0.587, 0.144));
     baseColor = step(ditherThreshhold, vec3(brightness));
 

@@ -13,8 +13,10 @@
 #include <fmt/format.h>
 #include "gamelogic.h"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/scalar_constants.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/fwd.hpp"
+#include "glm/gtc/constants.hpp"
 #include "glm/matrix.hpp"
 #include "glm/trigonometric.hpp"
 #include "sceneGraph.hpp"
@@ -38,6 +40,9 @@ SceneNode* textNode;
 // Global transforms for ez (lazy) reference.
 glm::mat4 projection;
 glm::vec3 cameraPosition;
+
+SceneNode* teapot;
+float teapotRot = 0.0;
 
 
 // Camera Stuff
@@ -173,9 +178,9 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
     // Basic white lights for testing normal map.
     SceneLights[0].color = glm::vec3(1.0, 1.0, 1.0);
-    SceneLights[0].node->position = glm::vec3(12.0f, 0.0f, 0.0f); 
+    SceneLights[0].node->position = glm::vec3(12.0f, 25.0f, 0.0f); 
     SceneLights[1].color = glm::vec3(1.0, 1.0, 1.0); 
-    SceneLights[1].node->position = glm::vec3(-24.0f, 0.0f, 0.0f); 
+    SceneLights[1].node->position = glm::vec3(-24.0f, 10.0f, 0.0f); 
     SceneLights[2].color = glm::vec3(1.0, 1.0, 1.0); 
 
     rootNode->children.push_back(SceneLights[0].node);
@@ -197,38 +202,44 @@ void initGame(GLFWwindow* window, CommandLineOptions gameOptions) {
 
 
     // Add Test Models.
-    SceneNode* well = loadGLBToSceneGraph("../res/gtlf/well_baked.glb");
-    rootNode->children.push_back(well);
-    well->position = glm::vec3(-10.0, -10.0, -10.0);
-    well->scale = glm::vec3(5.0, 5.0, 5.0);
+    // SceneNode* well = loadGLBToSceneGraph("../res/gtlf/well_baked.glb");
+    // rootNode->children.push_back(well);
+    // well->position = glm::vec3(-10.0, -10.0, -10.0);
+    // well->scale = glm::vec3(5.0, 5.0, 5.0);
 
-    SceneNode* teapot = loadGLBToSceneGraph("../res/gtlf/teapot_smooth.glb");
+    // SceneNode* X = loadGLBToSceneGraph("../res/gtlf/well_baked.glb");
+    // rootNode->children.push_back(X);
+    // X->position = glm::vec3(-10.0, 0.0, -10.0);
+    // X->scale = glm::vec3(0.5, 0.5, 0.5);
+    // X->scale = glm::vec3(2.0, 2.0, 2.0);
+
+    teapot = loadGLBToSceneGraph("../res/gtlf/shrine.glb");
     rootNode->children.push_back(teapot);
     teapot->position = glm::vec3(10.0, -10.0, -10.0);
-    teapot->scale = glm::vec3(2.0, 2.0, 2.0);
-    teapot->rotation = glm::vec3(0.0, 3.1, 0.0);
+    // teapot->scale = glm::vec3(2.0, 2.0, 2.0);
+    teapot->rotation = glm::vec3(0.0, 0.0, 0.0);
 
-    SceneNode* chair = loadGLBToSceneGraph("../res/gtlf/chair.glb");
-    rootNode->children.push_back(chair);
-    chair->position = glm::vec3(-40.0, -10.0, -10.0);
-    chair->scale = glm::vec3(3.0, 3.0, 3.0);
+    // SceneNode* chair = loadGLBToSceneGraph("../res/gtlf/chair.glb");
+    // rootNode->children.push_back(chair);
+    // chair->position = glm::vec3(-40.0, -10.0, -10.0);
+    // chair->scale = glm::vec3(3.0, 3.0, 3.0);
 
-    Mesh box = cube(glm::vec3(20, 20, 20), glm::vec2(50), true, false);
-    unsigned int boxVAO  = generateBuffer(box);
-    SceneNode* boxNode  = createSceneNode();
-    boxNode->vertexArrayObjectID  = boxVAO;
-    boxNode->VAOIndexCount        = box.indices.size();
-    boxNode->position = glm::vec3(-70.0, 10.0, -10.0);
-    rootNode->children.push_back(boxNode);
+    // Mesh box = cube(glm::vec3(20, 20, 20), glm::vec2(50), true, false);
+    // unsigned int boxVAO  = generateBuffer(box);
+    // SceneNode* boxNode  = createSceneNode();
+    // boxNode->vertexArrayObjectID  = boxVAO;
+    // boxNode->VAOIndexCount        = box.indices.size();
+    // boxNode->position = glm::vec3(-70.0, 10.0, -10.0);
+    // rootNode->children.push_back(boxNode);
 
 
-    Mesh box2 = cube(glm::vec3(10, 10, 10), glm::vec2(50), true, false);
-    unsigned int box2VAO  = generateBuffer(box2);
-    SceneNode* box2Node  = createSceneNode();
-    box2Node->vertexArrayObjectID  = box2VAO;
-    box2Node->VAOIndexCount        = box2.indices.size();
-    box2Node->position = glm::vec3(-70.0, 10.0, -40.0);
-    rootNode->children.push_back(box2Node);
+    // Mesh box2 = cube(glm::vec3(10, 10, 10), glm::vec2(50), true, false);
+    // unsigned int box2VAO  = generateBuffer(box2);
+    // SceneNode* box2Node  = createSceneNode();
+    // box2Node->vertexArrayObjectID  = box2VAO;
+    // box2Node->VAOIndexCount        = box2.indices.size();
+    // box2Node->position = glm::vec3(-70.0, 10.0, -40.0);
+    // rootNode->children.push_back(box2Node);
 
 
     std::cout << fmt::format("Initialized scene with {} SceneNodes.", totalChildren(rootNode)) << std::endl;
@@ -262,6 +273,11 @@ void updateFrame(GLFWwindow* window) {
 
     // Traverse scene graph and reduce transformations together.
     updateNodeTransformations(rootNode, glm::identity<glm::mat4>());
+
+
+    // speen
+    teapotRot = fmod(teapotRot + 0.01, glm::two_pi<float>());
+    teapot->rotation = glm::vec3(0.0, teapotRot, 0.0);
 
 }
 

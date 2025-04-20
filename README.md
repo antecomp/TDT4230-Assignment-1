@@ -1,3 +1,10 @@
+This code is based on the TDT4230 handout code.
+
+The camera can be moved with WASD, Space (up), Left Control (down).
+
+
+----------------------------------------------------
+
 # TDT4230 - Graphics and Visualization
 
 This is the base code for the NTNU subject TDT4230 assignments. It may also be used for the final project, which we will showcase [here](https://www.idi.ntnu.no/grupper/vis/teaching/)
